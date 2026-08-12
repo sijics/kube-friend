@@ -7,6 +7,13 @@ services:
       - "8000:8000"         # FastAPI accessible at http://localhost:8000
     env_file:
       - .env                # loads all secrets and config from the root .env file
+    environment:
+      # When the backend runs inside Docker, "localhost" refers to the container
+      # itself — not your Mac. Docker Desktop exposes the Mac host at the special
+      # hostname "host.docker.internal". This variable tells k8s_client.py to
+      # rewrite any localhost/127.0.0.1 server URLs to host.docker.internal so
+      # the in-container kubernetes client can reach the oc tunnel on your Mac.
+      - KUBE_SERVER_HOST_OVERRIDE=host.docker.internal
     volumes:
       # Mount your local kubeconfig into the container read-only.
       # This is how the kubernetes Python client authenticates to your cluster
