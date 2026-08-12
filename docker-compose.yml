@@ -1,0 +1,30 @@
+services:
+
+  # ── Backend — FastAPI + LangGraph agent ─────────────────────────────────────
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"         # FastAPI accessible at http://localhost:8000
+    env_file:
+      - .env                # loads all secrets and config from the root .env file
+    volumes:
+      # Mount your local kubeconfig into the container read-only.
+      # This is how the kubernetes Python client authenticates to your cluster
+      # without embedding credentials in the image.
+      - ~/.kube:/root/.kube:ro
+      # Mount source code for live reload during development.
+      # Remove this volume in a production deployment.
+      - ./backend/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    #                                                           ↑ --reload watches
+    #                                                             for file changes
+    #                                                             and restarts
+    #                                                             automatically
+
+  # ── Frontend — React + Vite (dev server) ────────────────────────────────────
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"           # UI accessible at http://localhost:5173
+    depends_on:
+      - backend             # Docker Compose starts backend before frontend
