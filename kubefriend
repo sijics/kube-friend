@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# kubefriend — CLI for managing the kubefriend app
+#
+# Usage:
+#   ./kubefriend start              Start backend + frontend, open browser
+#   ./kubefriend stop               Stop everything
+#   ./kubefriend restart            Stop then start
+#   ./kubefriend status             Show running status + current cluster
+#   ./kubefriend switch <context>   Switch kubectl context and restart backend
+#   ./kubefriend logs [backend|frontend]  Tail live logs
+#   ./kubefriend contexts           List all available kubectl contexts
+#   ./kubefriend llm <openai|watsonx>    Switch LLM provider
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_DIR="$REPO_ROOT/.kubefriend"
+ENV_FILE="$REPO_ROOT/.env"
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+BLUE='\033[0;34m'; BOLD='\033[1m'; RESET='\033[0m'
+ok()   { echo -e "${GREEN}✓${RESET} $*"; }
+info() { echo -e "${BLUE}→${RESET} $*"; }
+warn() { echo -e "${YELLOW}⚠${RESET} $*"; }
+die()  { echo -e "${RED}✗${RESET} $*" >&2; exit 1; }
+bold() { echo -e "${BOLD}$*${RESET}"; }
+
+CMD="${1:-help}"
+
+is_running() {
+  local pidfile="$PID_DIR/$1.pid"
+  [[ -f "$pidfile" ]] && kill -0 "$(cat "$pidfile")" 2>/dev/null
+}
+
+cmd_start()   { exec "$REPO_ROOT/run.sh"; }
+cmd_stop()    { exec "$REPO_ROOT/stop.sh"; }
+cmd_restart() { "$REPO_ROOT/stop.sh"; sleep 1; exec "$REPO_ROOT/run.sh"; }
+
+cmd_status() {
+  echo ""
+  bold "⎈  kubefriend status"
+  echo "────────────────────────────────────"
+  if is_running backend; then
+    ok "Backend  running (PID $(cat "$PID_DIR/backend.pid"))  →  http://localhost:8000"
+  else
+    echo -e "  ${RED}✗${RESET} Backend  not running"
+  fi
+  if is_running frontend; then
+    ok "Frontend running (PID $(cat "$PID_DIR/frontend.pid"))  →  http://localhost:5173"
+  else
+    echo -e "  ${RED}✗${RESET} Frontend not running"
+  fi
+  echo ""
+  CONTEXT=$(kubectl config current-context 2>/dev/null || echo "none")
+  SERVER=$(kubectl config view --minify --output jsonpath='{.clusters[0].cluster.server}' 2>/dev/null || echo "unknown")
+  NAMESPACE=$(kubectl config view --minify --output jsonpath='{.contexts[0].context.namespace}' 2>/dev/null || echo "default")
+  echo -e "  Cluster   : ${BOLD}$CONTEXT${RESET}"
+  echo -e "  Server    : $SERVER"
+  echo -e "  Namespace : $NAMESPACE"
+  if [[ -f "$ENV_FILE" ]]; then
+    LLM=$(grep "^LLM_PROVIDER=" "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "openai")
+    if [[ "$LLM" == "openai" ]]; then
+      MODEL=$(grep "^OPENAI_MODEL=" "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "gpt-4o")
+    else
+      MODEL=$(grep "^WATSONX_MODEL_ID=" "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+    fi
+    echo -e "  LLM       : ${BOLD}$LLM${RESET} ($MODEL)"
+  fi
+  echo ""
+}
+
+cmd_switch() {
+  local context="${2:-}"
+  if [[ -z "$context" ]]; then
+    echo ""; bold "Available contexts:"; echo ""
+    kubectl config get-contexts --no-headers 2>/dev/null | \
+      awk '{ current = ($1 == "*") ? "→" : " "; printf "  %s  %-50s  %s\n", current, $2, $5 }'
+    echo ""; echo "Usage: ./kubefriend switch <context-name>"; exit 0
+  fi
+  info "Switching context to: $context"
+  kubectl config use-context "$context" || die "Context '$context' not found"
+  ok "Switched to: $context"
+  if is_running backend; then
+    info "Restarting backend to pick up new context..."
+    kill "$(cat "$PID_DIR/backend.pid")" 2>/dev/null || true
+    sleep 1
+    cd "$REPO_ROOT/backend"
+    set -a; source "$ENV_FILE"; set +a
+    "$REPO_ROOT/backend/.venv/bin/uvicorn" app.main:app --host 0.0.0.0 --port 8000 --reload \
+      >> "$PID_DIR/backend.log" 2>&1 &
+    echo $! > "$PID_DIR/backend.pid"
+    for i in {1..20}; do curl -sf http://localhost:8000/healthz &>/dev/null && break; sleep 0.5; done
+    ok "Backend restarted with new context"
+  fi
+  echo ""; echo -e "  Now using: ${BOLD}$(kubectl config current-context)${RESET}"; echo ""
+}
+
+cmd_contexts() {
+  echo ""; bold "Available kubectl contexts:"; echo ""
+  kubectl config get-contexts --no-headers 2>/dev/null | \
+    awk '{ current = ($1 == "*") ? "→" : " "; printf "  %s  %-50s  %s\n", current, $2, $5 }'
+  echo ""; echo "Switch:  ./kubefriend switch <context-name>"; echo ""
+}
+
+cmd_logs() {
+  local target="${2:-both}"
+  mkdir -p "$PID_DIR"
+  touch "$PID_DIR/backend.log" "$PID_DIR/frontend.log"
+  case "$target" in
+    backend)  tail -f "$PID_DIR/backend.log" ;;
+    frontend) tail -f "$PID_DIR/frontend.log" ;;
+    *)        tail -f "$PID_DIR/backend.log" "$PID_DIR/frontend.log" ;;
+  esac
+}
+
+cmd_llm() {
+  local provider="${2:-}"
+  if [[ -z "$provider" ]]; then
+    CURRENT=$(grep "^LLM_PROVIDER=" "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "openai")
+    echo ""; echo -e "  Current LLM: ${BOLD}$CURRENT${RESET}"
+    echo "  Usage: ./kubefriend llm openai  OR  ./kubefriend llm watsonx"; echo ""; exit 0
+  fi
+  [[ "$provider" != "openai" && "$provider" != "watsonx" ]] && die "Use: openai or watsonx"
+  if grep -q "^LLM_PROVIDER=" "$ENV_FILE" 2>/dev/null; then
+    sed -i '' "s/^LLM_PROVIDER=.*/LLM_PROVIDER=$provider/" "$ENV_FILE"
+  elif grep -q "^#LLM_PROVIDER=" "$ENV_FILE" 2>/dev/null; then
+    sed -i '' "s/^#LLM_PROVIDER=.*/LLM_PROVIDER=$provider/" "$ENV_FILE"
+  else
+    echo "LLM_PROVIDER=$provider" >> "$ENV_FILE"
+  fi
+  ok "Switched LLM to: $provider"
+  if is_running backend; then
+    info "Restarting backend..."
+    kill "$(cat "$PID_DIR/backend.pid")" 2>/dev/null || true; sleep 1
+    cd "$REPO_ROOT/backend"; set -a; source "$ENV_FILE"; set +a
+    "$REPO_ROOT/backend/.venv/bin/uvicorn" app.main:app --host 0.0.0.0 --port 8000 --reload \
+      >> "$PID_DIR/backend.log" 2>&1 &
+    echo $! > "$PID_DIR/backend.pid"
+    for i in {1..20}; do curl -sf http://localhost:8000/healthz &>/dev/null && break; sleep 0.5; done
+    ok "Backend restarted with $provider"
+  fi
+  echo ""
+}
+
+cmd_help() {
+  echo ""
+  bold "⎈  kubefriend — AI DevOps Assistant"
+  echo ""
+  echo "  Usage: ./kubefriend <command> [args]"
+  echo ""
+  echo "  Commands:"
+  echo "    start                   Start backend + frontend, open browser"
+  echo "    stop                    Stop everything"
+  echo "    restart                 Stop then start"
+  echo "    status                  Show running status + cluster + LLM"
+  echo "    switch <context>        Switch kubectl context (restarts backend)"
+  echo "    contexts                List all available kubectl contexts"
+  echo "    logs [backend|frontend] Tail logs (default: both)"
+  echo "    llm [openai|watsonx]    Switch LLM provider (restarts backend)"
+  echo ""
+  echo "  Examples:"
+  echo "    ./kubefriend start"
+  echo "    ./kubefriend switch rancher-desktop"
+  echo "    ./kubefriend switch lh-wxd-dev-us-south-db-roks24-oc"
+  echo "    ./kubefriend llm watsonx"
+  echo "    ./kubefriend logs backend"
+  echo ""
+}
+
+case "$CMD" in
+  start)    cmd_start "$@" ;;
+  stop)     cmd_stop "$@" ;;
+  restart)  cmd_restart "$@" ;;
+  status)   cmd_status "$@" ;;
+  switch)   cmd_switch "$@" ;;
+  contexts) cmd_contexts "$@" ;;
+  logs)     cmd_logs "$@" ;;
+  llm)      cmd_llm "$@" ;;
+  help|--help|-h) cmd_help ;;
+  *) warn "Unknown command: $CMD"; cmd_help; exit 1 ;;
+esac

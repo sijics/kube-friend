@@ -7,15 +7,21 @@
 // mid-stream would send it without the previous assistant response in
 // the history, breaking multi-turn context.
 
-import { useState, type KeyboardEvent } from 'react'
+import { useState, useEffect, type KeyboardEvent } from 'react'
 
 interface Props {
   onSend: (message: string) => void
   isStreaming: boolean
+  prefill?: string   // pre-filled text from "Ask AI" button on dashboard
 }
 
-export function InputBar({ onSend, isStreaming }: Props) {
+export function InputBar({ onSend, isStreaming, prefill = '' }: Props) {
   const [value, setValue] = useState('')
+
+  // When Dashboard "Ask AI" sets a prefill, populate the input
+  useEffect(() => {
+    if (prefill) setValue(prefill)
+  }, [prefill])
 
   const handleSend = () => {
     const trimmed = value.trim()

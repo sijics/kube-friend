@@ -3,13 +3,14 @@ import traceback
 from collections import defaultdict
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
 from sse_starlette.sse import EventSourceResponse
 
 from app.agent.graph import agent_graph
-from app.schemas import ChatRequest
+from app.dashboard import build_dashboard
+from app.schemas import ChatRequest, DashboardResponse
 
 
 # ── FastAPI app ───────────────────────────────────────────────────────────────
@@ -63,6 +64,20 @@ async def healthz():
     the service is alive. Returns immediately with no side effects.
     """
     return {"status": "ok"}
+
+
+# ── Dashboard endpoint ────────────────────────────────────────────────────────
+
+@app.get("/api/dashboard", response_model=DashboardResponse)
+async def dashboard(namespace: str = Query("default", description="Kubernetes namespace to scan")):
+    """
+    Scan all pods in the given namespace, classify their health, and return
+    AI-generated diagnosis and suggestions for any unhealthy pods.
+
+    The frontend polls this endpoint every 30 seconds to keep the dashboard live.
+    """
+    result = await build_dashboard(namespace)
+    return result
 
 
 # ── Chat endpoint ─────────────────────────────────────────────────────────────

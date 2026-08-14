@@ -47,6 +47,37 @@ export interface SSEErrorEvent {
   }
 }
 
+// ── Dashboard types ───────────────────────────────────────────────────────────
+
+export type PodSeverity = 'healthy' | 'warning' | 'critical'
+
+export interface DashboardPod {
+  name: string
+  namespace: string
+  status: string           // e.g. "CrashLoopBackOff", "Running", "Pending"
+  phase: string            // Kubernetes phase: Running | Pending | Failed | ...
+  severity: PodSeverity
+  restarts: number
+  age_hours: number | null
+  node: string
+  diagnosis: string | null  // AI-generated root cause
+  suggestion: string | null // AI-generated fix
+}
+
+export interface DashboardSummary {
+  total: number
+  running: number
+  warning: number
+  critical: number
+}
+
+export interface DashboardResponse {
+  pods: DashboardPod[]
+  summary: DashboardSummary
+  namespaces: string[]
+  error?: string
+}
+
 export type SSEEvent =
   | SSETokenEvent
   | SSEToolCallEvent

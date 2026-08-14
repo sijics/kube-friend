@@ -1,7 +1,19 @@
+# Secrets
 .env
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
+*.egg-info/
+
+# Node
 node_modules/
 dist/
+
+# kubefriend runtime (PIDs + logs)
+.kubefriend/
+
+# macOS
 .DS_Store

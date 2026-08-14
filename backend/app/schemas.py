@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -43,3 +43,32 @@ class ChatResponse(BaseModel):
     """
     type: str
     data: Any
+
+
+# ── Dashboard schemas ─────────────────────────────────────────────────────────
+
+class DashboardPod(BaseModel):
+    name: str
+    namespace: str
+    status: str
+    phase: str
+    severity: str                   # "healthy" | "warning" | "critical"
+    restarts: int
+    age_hours: Optional[float]
+    node: str
+    diagnosis: Optional[str]        # AI-generated root cause (unhealthy pods only)
+    suggestion: Optional[str]       # AI-generated fix suggestion
+
+
+class DashboardSummary(BaseModel):
+    total: int
+    running: int
+    warning: int
+    critical: int
+
+
+class DashboardResponse(BaseModel):
+    pods: list[DashboardPod]
+    summary: DashboardSummary
+    namespaces: list[str]
+    error: Optional[str] = None
