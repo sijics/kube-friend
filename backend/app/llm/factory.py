@@ -20,6 +20,7 @@ def get_llm() -> BaseChatModel:
     Supported providers (set LLM_PROVIDER in .env):
     - "openai"   → OpenAI GPT-4o  (default)
     - "watsonx"  → IBM watsonx Granite
+    - "ollama"   → local Ollama (e.g. llama3, mistral)
     """
     provider = os.getenv("LLM_PROVIDER", "openai").lower().strip()
 
@@ -27,10 +28,12 @@ def get_llm() -> BaseChatModel:
         return _build_openai()
     elif provider == "watsonx":
         return _build_watsonx()
+    elif provider == "ollama":
+        return _build_ollama()
     else:
         raise ValueError(
             f"Unknown LLM_PROVIDER='{provider}'. "
-            "Supported values: 'openai', 'watsonx'"
+            "Supported values: 'openai', 'watsonx', 'ollama'"
         )
 
 
@@ -104,4 +107,27 @@ def _build_watsonx() -> BaseChatModel:
             "temperature": 0,  # same reasoning as OpenAI — deterministic answers
             "max_new_tokens": 1024,
         },
+    )
+
+
+def _build_ollama() -> BaseChatModel:
+    """
+    Build a ChatOllama instance for a locally-running Ollama server.
+
+    Required env vars:
+    - OLLAMA_MODEL    → model name, e.g. "llama3", "mistral" (default: "llama3")
+    - OLLAMA_BASE_URL → Ollama server URL (default: http://localhost:11434)
+
+    Install Ollama: https://ollama.com/
+    Pull a model:  ollama pull llama3
+    """
+    from langchain_ollama import ChatOllama
+
+    model = os.getenv("OLLAMA_MODEL", "llama3")
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+    return ChatOllama(
+        model=model,
+        base_url=base_url,
+        temperature=0,
     )

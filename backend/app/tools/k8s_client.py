@@ -32,6 +32,11 @@ def _load_kube_config() -> None:
         pass
 
     kubeconfig_path = os.getenv("KUBECONFIG_PATH")
+    # Expand ~ so paths like "~/.kube/config" work regardless of how the
+    # process was started (uvicorn reload spawns subprocesses that may not
+    # inherit a fully expanded PATH from the parent shell).
+    if kubeconfig_path:
+        kubeconfig_path = os.path.expanduser(kubeconfig_path)
     config.load_kube_config(config_file=kubeconfig_path or None)
 
     host_override = os.getenv("KUBE_SERVER_HOST_OVERRIDE")

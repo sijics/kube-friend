@@ -1,5 +1,6 @@
 from typing import Literal
 
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
@@ -10,19 +11,35 @@ from app.llm.factory import get_llm
 from app.tools.registry import TOOLS
 
 
-# ── Step 1: Bind the LLM to the tools ────────────────────────────────────────
+# ── Step 1: Bind the LLM to the tools (lazily) ───────────────────────────────
 #
-# WHY .bind_tools()?
-# ------------------
-# GPT-4o doesn't know about our tools unless we tell it.
-# .bind_tools(TOOLS) takes each tool's name, description, and argument schema
-# and sends them to GPT-4o as part of every request in a special "tools" field.
-# GPT-4o can then respond with a structured tool_call instead of plain text.
+# WHY lazy initialisation?
+# ------------------------
+# Some LLM providers (e.g. watsonx) validate credentials against a remote API
+# during __init__. If those credentials are temporarily invalid (e.g. a WML
+# service association is still propagating), a module-level call would crash
+# the entire server on startup.
 #
-# Think of it as giving GPT-4o a menu of available actions.
-# Without this, GPT-4o would just write text — it couldn't call get_pod_status.
+# The lazy wrapper defers the actual LLM construction until the first chat
+# request arrives. The server stays healthy for health-checks and dashboard
+# calls while the LLM config is still being sorted out.
 
-_llm_with_tools = get_llm().bind_tools(TOOLS)
+_llm_with_tools_cache: BaseChatModel | None = None
+
+
+def _get_llm_with_tools() -> BaseChatModel:
+    """Return the cached LLM+tools binding, building it on first call."""
+    global _llm_with_tools_cache
+    if _llm_with_tools_cache is None:
+        _llm_with_tools_cache = get_llm().bind_tools(TOOLS)
+    return _llm_with_tools_cache
+
+
+def reset_llm_cache() -> None:
+    """Clear the cached LLM instance so the next call rebuilds it.
+    Called by /api/llm/reset when switching providers at runtime."""
+    global _llm_with_tools_cache
+    _llm_with_tools_cache = None
 
 
 # ── Step 2: Define Node 1 — the "agent" node ─────────────────────────────────
@@ -46,11 +63,11 @@ def agent_node(state: AgentState) -> dict:
     if not messages or not isinstance(messages[0], SystemMessage):
         messages = [SystemMessage(content=SYSTEM_PROMPT)] + list(messages)
 
-    # Call GPT-4o with the full history.
+    # Call the LLM with the full history.
     # The response is an AIMessage that contains either:
     # (a) .tool_calls = [{"name": "get_pod_status", "args": {...}}]  → go to tools node
     # (b) .content    = "Root cause is OOMKilled..."                 → go to END
-    response = _llm_with_tools.invoke(messages)
+    response = _get_llm_with_tools().invoke(messages)
 
     # Return a dict with the new message to append to state.
     # add_messages reducer (defined in state.py) appends this to the list.

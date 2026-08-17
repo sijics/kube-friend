@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage
 from sse_starlette.sse import EventSourceResponse
 
-from app.agent.graph import agent_graph
+from app.agent.graph import agent_graph, reset_llm_cache
 from app.dashboard import build_dashboard
 from app.schemas import ChatRequest, DashboardResponse
 
@@ -63,7 +63,34 @@ async def healthz():
     Docker Compose, load balancers, and readiness probes call this to verify
     the service is alive. Returns immediately with no side effects.
     """
-    return {"status": "ok"}
+    import os
+    return {"status": "ok", "llm_provider": os.getenv("LLM_PROVIDER", "openai")}
+
+
+# ── LLM management endpoints ─────────────────────────────────────────────────
+
+@app.get("/api/llm")
+async def get_llm_info():
+    """Return the currently active LLM provider."""
+    import os
+    return {"provider": os.getenv("LLM_PROVIDER", "openai")}
+
+
+@app.post("/api/llm/reset")
+async def reset_llm(provider: str | None = None):
+    """
+    Reset the LLM cache so the next chat request picks up a fresh instance.
+
+    Optionally accepts ?provider=openai|watsonx|ollama to switch the provider
+    at runtime (sets LLM_PROVIDER env var in this process).
+
+    Used by `./kubefriend llm <provider>` to hot-swap without restarting.
+    """
+    import os
+    if provider:
+        os.environ["LLM_PROVIDER"] = provider
+    reset_llm_cache()
+    return {"status": "reset", "provider": os.getenv("LLM_PROVIDER", "openai")}
 
 
 # ── Dashboard endpoint ────────────────────────────────────────────────────────
