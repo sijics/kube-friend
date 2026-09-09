@@ -1,0 +1,866 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>kubefriend — Video Tutorial Series Prompts</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #1f2328;
+    background: #fff;
+    padding: 40px 24px 60px;
+  }
+  .page { max-width: 800px; margin: 0 auto; }
+
+  /* cover */
+  .cover {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 36px 40px 32px;
+    margin-bottom: 36px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .cover h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .cover .sub { font-size: 14px; color: #57606a; margin-bottom: 20px; }
+  .cover-meta { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: #57606a; border-top: 1px solid #e5e7eb; padding-top: 14px; }
+  .cover-meta span strong { color: #1f2328; }
+
+  /* how to use box */
+  .how-to {
+    background: #f0f6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 36px;
+    font-size: 13px;
+  }
+  .how-to h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; }
+  .how-to ol { padding-left: 18px; }
+  .how-to li { margin-bottom: 5px; }
+
+  /* episode card */
+  .episode {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .episode-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 22px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .ep-number {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 2px;
+  }
+  .ep-blue   { background: #3b82d4; }
+  .ep-purple { background: #7c5cd8; }
+  .ep-green  { background: #2da44e; }
+  .ep-orange { background: #d97706; }
+  .ep-teal   { background: #0891b2; }
+  .ep-rose   { background: #e11d48; }
+  .ep-slate  { background: #475569; }
+  .ep-indigo { background: #4f46e5; }
+
+  .ep-meta { flex: 1; }
+  .ep-meta h2 { font-size: 15px; font-weight: 700; color: #1f2328; margin-bottom: 4px; }
+  .ep-meta .ep-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #f1f3f5;
+    color: #57606a;
+  }
+  .tag-blue   { background: #dbeafe; color: #1e40af; }
+  .tag-purple { background: #ede9fe; color: #5b21b6; }
+  .tag-green  { background: #d3f5e4; color: #1a7f37; }
+  .ep-duration { font-size: 12px; color: #57606a; margin-top: 2px; }
+
+  .episode-body { padding: 20px 22px; }
+
+  /* sections inside episode */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #57606a;
+    margin: 16px 0 6px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* the actual prompt box */
+  .prompt-box {
+    background: #1f2328;
+    color: #e6edf3;
+    border-radius: 6px;
+    padding: 16px 18px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    margin: 6px 0 14px;
+    position: relative;
+  }
+  .prompt-box .section { color: #79c0ff; font-weight: 600; }
+  .prompt-box .value   { color: #e6edf3; }
+  .prompt-box .accent  { color: #ffa657; }
+  .prompt-box .dim     { color: #8b949e; }
+
+  /* talking points */
+  .points { margin: 6px 0 14px; }
+  .points li { font-size: 13px; margin-bottom: 4px; padding-left: 4px; }
+  .points li::marker { color: #3b82d4; }
+
+  /* visuals */
+  .visual-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .visual-chip {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #1f2328;
+  }
+
+  /* series map */
+  .series-map {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 36px;
+  }
+  .series-map h3 { font-size: 13px; font-weight: 700; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #57606a; }
+  .series-row { display: flex; align-items: center; gap: 0; margin-bottom: 4px; font-size: 13px; }
+  .series-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+    margin-right: 10px;
+  }
+  .series-arrow { color: #e5e7eb; margin: 0 4px; font-size: 16px; }
+
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 32px 0; }
+
+  .footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #57606a; }
+
+  @media print {
+    .episode { page-break-inside: avoid; }
+    .cover { page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+
+<div class="cover">
+  <div class="cover-badge">Video Tutorial Series</div>
+  <h1>kubefriend — Building an AI DevOps Assistant</h1>
+  <div class="sub">AI video generation prompts for the full 8-episode series. Each prompt is ready to paste into any video AI tool (Synthesia, HeyGen, Pictory, InVideo, or a script for a presenter-led recording).</div>
+  <div class="cover-meta">
+    <span><strong>Series:</strong> kubefriend from idea to production</span>
+    <span><strong>Episodes:</strong> 8</span>
+    <span><strong>Total runtime:</strong> ~2.5 hours</span>
+    <span><strong>Audience:</strong> Developers, DevOps engineers, platform teams</span>
+  </div>
+</div>
+
+
+<div class="how-to">
+  <h3>How to use these prompts</h3>
+  <ol>
+    <li>Each episode has a <strong>Video AI Prompt</strong> — paste it directly into Synthesia, HeyGen, InVideo, Pictory, or any script-based video generator.</li>
+    <li>The prompt is structured with clearly labelled sections: <code>TITLE</code>, <code>HOOK</code>, <code>SCRIPT</code>, <code>VISUALS</code>, <code>CLOSING</code> — follow the order as-is or adapt for your tool.</li>
+    <li>The <strong>Talking Points</strong> list under each episode is for you as the presenter — these are the key concepts to make sure get covered.</li>
+    <li>The <strong>Suggested Visuals</strong> chips tell the video tool (or a video editor) what to show on screen at each moment.</li>
+    <li>Episodes are designed to work as standalone videos <em>and</em> as a connected series — each ends with a teaser for the next.</li>
+  </ol>
+</div>
+
+
+<div class="series-map">
+  <h3>Series Map</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+    <div class="series-row"><div class="series-dot ep-blue">1</div> The Idea &amp; Problem</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-purple">2</div> System Design</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-green">3</div> LangChain &amp; LLMs</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-orange">4</div> LangGraph &amp; ReAct</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-teal">5</div> Kubernetes Tools</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-rose">6</div> FastAPI &amp; Streaming</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-slate">7</div> React Frontend</div>
+    <div class="series-arrow">→</div>
+    <div class="series-row"><div class="series-dot ep-indigo">8</div> Live Demo &amp; Roadmap</div>
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-blue">1</div>
+    <div class="ep-meta">
+      <h2>Episode 1 — The Idea: Why I Built an AI DevOps Assistant</h2>
+      <div class="ep-duration">⏱ Suggested length: 12–15 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-blue">Concept</span>
+        <span class="tag tag-blue">Problem Statement</span>
+        <span class="tag tag-blue">Motivation</span>
+        <span class="tag">No code</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP1 — The Idea: Why I Built an AI DevOps Assistant</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">Open with a developer at a terminal, staring at a failing pod. Show four commands they have to run manually:
+kubectl get pod, kubectl describe pod, kubectl logs, kubectl get events.
+Narrator: "Every time something breaks in Kubernetes, you run the same four commands, copy-paste the output, and try to figure out what went wrong. What if you could just ask a question?"</span>
+
+<span class="section">SCRIPT (0:30–10:00):</span>
+<span class="value">Section 1 — The Pain Point (2 min)
+Describe the daily reality of debugging Kubernetes in production. Engineers spend significant time context-switching between kubectl commands, reading cryptic error messages like CrashLoopBackOff and OOMKilled, and cross-referencing logs, events, and deployment configs just to understand one failing pod. Show side-by-side: a terminal full of kubectl output vs a single chat message that asks "why is my pod failing?"
+
+Section 2 — The Idea (2 min)
+Introduce kubefriend: a local AI assistant that connects directly to your Kubernetes cluster. You ask a question in plain English. It fetches the real data from your cluster, reasons about it, and tells you the root cause plus exactly how to fix it. Show the final product briefly — a chat interface, a question typed, tool calls appearing, a streamed answer.
+
+Section 3 — Why AI for DevOps? (3 min)
+Explain the shift: AI is no longer just a chatbot. Modern LLMs can use tools — they can call functions, read results, and reason across multiple data sources. This is the foundation of an AI agent. A K8s agent can look at pod status, then logs, then events, all automatically, just like an experienced SRE would.
+
+Section 4 — What kubefriend is NOT (1 min)
+It does not write kubectl commands for you to copy-paste. It does not guess. It reads live data from your actual cluster and reasons about that data. It is grounded, not hallucinated.
+
+Section 5 — What you will build in this series (2 min)
+Walk through the series outline. Eight episodes. By the end you will have a fully working AI DevOps assistant that you built yourself, that you understand completely, and that you can extend.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- Terminal showing kubectl commands and messy output (first 30s)
+- kubefriend chat UI answering "why is my pod failing?" with tool call panel
+- Diagram: LLM + Tools = AI Agent (simple 3-box illustration)
+- Side-by-side: manual kubectl workflow vs kubefriend single question
+- Series episode map with titles</span>
+
+<span class="section">CLOSING (10:00–12:00):</span>
+<span class="value">"In the next episode we will design the full architecture — every component, why it was chosen, and how they all connect. See you there."
+Show the architecture diagram as a teaser, blurred or partially revealed.</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>The 4-command K8s debugging loop that every developer does manually</li>
+      <li>CrashLoopBackOff, OOMKilled, Pending — these are not self-explanatory errors</li>
+      <li>AI agents can <em>use tools</em> — that's what makes them more than chatbots</li>
+      <li>The assistant never guesses — it reads your actual cluster</li>
+      <li>Purpose of the series: build it, understand it, extend it</li>
+    </ul>
+
+    <div class="section-label">Suggested On-Screen Visuals</div>
+    <div class="visual-row">
+      <span class="visual-chip">Terminal with kubectl commands</span>
+      <span class="visual-chip">kubefriend chat demo</span>
+      <span class="visual-chip">LLM + Tools = Agent diagram</span>
+      <span class="visual-chip">Series roadmap slide</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-purple">2</div>
+    <div class="ep-meta">
+      <h2>Episode 2 — System Design: Architecture of an AI DevOps Tool</h2>
+      <div class="ep-duration">⏱ Suggested length: 15–18 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-purple">Architecture</span>
+        <span class="tag tag-purple">System Design</span>
+        <span class="tag tag-purple">Design Decisions</span>
+        <span class="tag">No code</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP2 — System Design: Architecture of an AI DevOps Tool</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"Before writing a single line of code, we designed the full system. In this episode I'll walk you through every architectural decision — what we built, how it fits together, and why we made each choice over the alternatives."</span>
+
+<span class="section">SCRIPT (0:30–14:00):</span>
+<span class="value">Section 1 — The Full Architecture Diagram (3 min)
+Show the complete architecture: Browser → React frontend → FastAPI backend → LangGraph Agent → 7 Kubernetes tools → Kubernetes cluster. Also show the LLM providers (OpenAI, watsonx, Ollama) connecting into the agent. Walk through the data flow for a single question from start to finish.
+
+Section 2 — Why FastAPI? (2 min)
+Explain why FastAPI was chosen for the backend: async-native Python, built-in SSE support for streaming, automatic API documentation, and the fact that Python is the standard language for LLM tooling. Compare briefly to alternatives: Flask (no async), Node.js Express (different language ecosystem from LLM libs).
+
+Section 3 — Why native process, not Docker? (2 min)
+Explain the oc login tunnel problem. When you run oc login to connect to OpenShift or IBM ROKS, the cluster API is tunnelled to localhost on your Mac. A Docker container has its own localhost — it cannot reach the Mac's localhost where the tunnel is. A native Python process running on Mac shares the same network as the tunnel. This is a real infrastructure constraint, not a preference.
+
+Section 4 — Why SSE for streaming? (2 min)
+Contrast WebSocket vs SSE. SSE is unidirectional server-to-client, which is exactly what we need: the agent is working and pushing updates to the browser. SSE is simpler, works over plain HTTP, and is natively supported by browsers. No library needed on the client — just the browser's built-in EventSource API.
+
+Section 5 — The three LLM providers (2 min)
+Explain why kubefriend supports OpenAI, IBM watsonx, and Ollama. OpenAI for best quality. watsonx for IBM Cloud enterprise deployments where data must stay on IBM infrastructure. Ollama for completely offline, zero-cost, private use. The LangChain abstraction means switching between them is a single environment variable.
+
+Section 6 — Key design principles (1 min)
+Three principles that guided every decision: (1) grounded answers — always call a real tool, never guess, (2) lazy initialisation — don't crash the server just because one component has a config issue, (3) extensibility — adding a new tool or a new LLM provider should require changing the minimum number of files.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- Full architecture diagram (animated, build it up layer by layer)
+- Docker localhost vs Mac localhost diagram
+- SSE vs WebSocket comparison slide
+- Three LLM provider cards with logos
+- Design principles as three cards</span>
+
+<span class="section">CLOSING (14:00–15:30):</span>
+<span class="value">"Now we know what we're building and why every piece is there. In the next episode we'll meet LangChain — the library that lets us talk to any LLM with the same code."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>Architecture walkthrough: browser → FastAPI → LangGraph → tools → cluster</li>
+      <li>The oc login tunnel problem — why Docker breaks it, why native doesn't</li>
+      <li>SSE vs WebSocket — why SSE is the right choice for one-way streaming</li>
+      <li>Why three LLM providers: quality (OpenAI) vs enterprise (watsonx) vs offline (Ollama)</li>
+      <li>The LangChain abstraction: one interface, any LLM behind it</li>
+      <li>Lazy LLM init — the server shouldn't crash if your LLM key is wrong</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">Layered architecture diagram</span>
+      <span class="visual-chip">Docker localhost problem diagram</span>
+      <span class="visual-chip">SSE stream animation</span>
+      <span class="visual-chip">LLM provider comparison table</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-green">3</div>
+    <div class="ep-meta">
+      <h2>Episode 3 — LangChain: The LLM Abstraction Layer</h2>
+      <div class="ep-duration">⏱ Suggested length: 18–20 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-green">LangChain</span>
+        <span class="tag tag-green">LLM Integration</span>
+        <span class="tag tag-green">Code Walkthrough</span>
+        <span class="tag">factory.py</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP3 — LangChain: One Interface to Rule All LLMs</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"Every LLM has a different SDK, a different API, a different way to send messages. LangChain solves that with one unified interface. Let me show you how kubefriend uses it and why it matters."</span>
+
+<span class="section">SCRIPT (0:30–17:00):</span>
+<span class="value">Section 1 — The Problem Without LangChain (3 min)
+Show code snippets of calling OpenAI directly, calling watsonx directly, and calling Ollama directly. Each one looks completely different — different class names, different method names, different response shapes. Point out: if you want to switch LLMs, you have to rewrite all of this. Now show the LangChain version: one method, same call, same response format, regardless of provider.
+
+Section 2 — What is BaseChatModel? (3 min)
+Introduce BaseChatModel as the central interface. Explain: .invoke() sends messages and gets a response, .bind_tools() attaches tool schemas so the LLM knows what it can call, .astream_events() runs asynchronously and yields events as tokens are produced. Every LangChain LLM implements this interface. Our code only ever calls these three methods.
+
+Section 3 — The Message Types (3 min)
+Walk through the four message types: SystemMessage (the rules for the LLM), HumanMessage (the user's question), AIMessage (the LLM's reply — either a tool call or text), ToolMessage (the result a tool returned). Show how a full conversation is just a list of these four types growing over time. Draw the message sequence on screen.
+
+Section 4 — The @tool Decorator (3 min)
+Show the get_pod_status function. Before the decorator it's just a Python function. After @tool, LangChain has read its name, docstring, and type hints and built a structured schema from them. That schema is what gets sent to the LLM so it knows the function exists and how to call it. Emphasise: the docstring IS the tool description the LLM reads. Write it clearly or the LLM won't use the tool correctly.
+
+Section 5 — factory.py code walkthrough (3 min)
+Open factory.py. Walk through the get_llm() function. Show how LLM_PROVIDER env var controls which branch runs. Show the ChatOpenAI, ChatWatsonx, and ChatOllama instantiation. Show that the return type is always BaseChatModel. Explain lazy initialisation: the LLM is not built at import time — it's built when the first chat request arrives. This means a bad API key doesn't crash the server on startup.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- Split screen: OpenAI SDK vs watsonx SDK vs LangChain (same call)
+- BaseChatModel interface diagram with .invoke(), .bind_tools(), .astream_events()
+- Message sequence diagram: System → Human → AI(tool_call) → Tool → AI(answer)
+- factory.py code shown with annotations
+- @tool decorator before/after with schema output shown</span>
+
+<span class="section">CLOSING (17:00–18:30):</span>
+<span class="value">"LangChain gives us the vocabulary — messages, tools, a uniform LLM interface. But it doesn't run the agent loop. That's LangGraph's job. Next episode we'll build the ReAct reasoning engine."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>The problem: every LLM SDK looks different — LangChain gives a single interface</li>
+      <li>BaseChatModel: .invoke(), .bind_tools(), .astream_events() — three methods, that's it</li>
+      <li>Four message types and the conversation as a growing list</li>
+      <li>@tool decorator: turns a Python function into a structured LLM-callable tool</li>
+      <li>The docstring is what the LLM reads — it matters more than you think</li>
+      <li>factory.py: get_llm() returns BaseChatModel regardless of provider</li>
+      <li>Lazy init: don't build the LLM at import time — defer to first request</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">LLM SDK comparison code</span>
+      <span class="visual-chip">BaseChatModel interface diagram</span>
+      <span class="visual-chip">Message sequence animation</span>
+      <span class="visual-chip">factory.py annotated walkthrough</span>
+      <span class="visual-chip">@tool decorator demo</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-orange">4</div>
+    <div class="ep-meta">
+      <h2>Episode 4 — LangGraph &amp; ReAct: Building the Agent Brain</h2>
+      <div class="ep-duration">⏱ Suggested length: 20–22 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-purple">LangGraph</span>
+        <span class="tag tag-purple">ReAct Pattern</span>
+        <span class="tag tag-green">Code Walkthrough</span>
+        <span class="tag">graph.py</span>
+        <span class="tag">state.py</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP4 — LangGraph and ReAct: Building the AI Reasoning Loop</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"A chatbot answers questions. An agent takes actions. The difference is a reasoning loop — think, act, observe, think again. In this episode I'll show you how we built that loop using LangGraph, and why it makes kubefriend far more powerful than any chatbot."</span>
+
+<span class="section">SCRIPT (0:30–19:00):</span>
+<span class="value">Section 1 — What is ReAct? (3 min)
+Explain the ReAct pattern: Reasoning + Acting. The LLM thinks about what to do next, takes an action (calls a tool), observes the result, thinks again based on the new information, and repeats until it has enough to answer. Contrast this with a simple chatbot that responds from training data in one shot. Show the loop visually.
+
+Section 2 — Why LangGraph? (3 min)
+Show what a naive while loop implementation looks like. Point out the problems: no streaming, no checkpointing, no parallel tool calls, no observability. LangGraph models the agent as a compiled, validated graph. Errors surface at startup, not mid-conversation. Async streaming is built in. The graph is inspectable and debuggable.
+
+Section 3 — Core Concepts: State, Nodes, Edges (4 min)
+Explain each concept with the kubefriend implementation. State is AgentState — a TypedDict holding the growing message list. The add_messages reducer means nodes append to the list rather than replacing it. Two nodes: the agent node (LLM thinks) and the ToolNode (executes tool calls). Two edge types: an unconditional edge from tools back to agent, and a conditional edge from agent that routes to tools or END based on whether the LLM made a tool call.
+
+Section 4 — should_continue() — the routing function (2 min)
+Show the should_continue function. It reads the last message in state. If the AIMessage has tool_calls, route to the tools node. If it has content and no tool_calls, the LLM is done — route to END. Emphasise: the LLM itself decides when it has enough data to stop. We don't hard-code "call exactly 3 tools".
+
+Section 5 — graph.py code walkthrough (4 min)
+Walk through every line of graph.py. StateGraph construction, add_node calls, add_edge and add_conditional_edges, compile(). Show how compile() validates the graph. Show the singleton pattern: agent_graph is built once at startup and reused for all requests. Show how _get_llm_with_tools() is lazy — first call builds and caches, subsequent calls return the cache.
+
+Section 6 — Live trace of a real question (3 min)
+Walk through what happens step-by-step when a user asks "Why is my demo-crashloop pod failing?". Show the message list growing: System → Human → AI(get_pod_status) → Tool(result) → AI(get_pod_logs) → Tool(result) → AI(get_pod_events) → Tool(result) → AI(final answer). Show how should_continue routes after each step.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- ReAct loop animation: Think → Act → Observe → Think
+- Naive while loop code vs LangGraph graph code side by side
+- Graph diagram: START → agent → [tools → agent] → END
+- AgentState message list growing animation
+- graph.py code with live annotations
+- Message sequence trace for the demo-crashloop question</span>
+
+<span class="section">CLOSING (19:00–20:30):</span>
+<span class="value">"We have the brain. Now we need the hands — the Kubernetes tools the agent can call to read your cluster. Next episode we'll build all seven of them."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>ReAct = Reasoning + Acting — think, call tool, observe result, repeat</li>
+      <li>A while loop works but breaks at scale — LangGraph gives compile-time validation, async, streaming</li>
+      <li>State = growing message list; add_messages reducer appends, not replaces</li>
+      <li>Two nodes: agent (LLM) and ToolNode (executes tool calls automatically)</li>
+      <li>should_continue() — the LLM decides when to stop, not hard-coded logic</li>
+      <li>compile() validates the graph at startup — runtime errors are caught early</li>
+      <li>Lazy LLM cache — built on first request, reset when provider is switched</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">ReAct loop animation</span>
+      <span class="visual-chip">Graph node/edge diagram</span>
+      <span class="visual-chip">AgentState growing list</span>
+      <span class="visual-chip">graph.py line-by-line walkthrough</span>
+      <span class="visual-chip">Live message trace</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-teal">5</div>
+    <div class="ep-meta">
+      <h2>Episode 5 — The 7 Kubernetes Tools: Giving the Agent Eyes</h2>
+      <div class="ep-duration">⏱ Suggested length: 20–22 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-blue">Kubernetes</span>
+        <span class="tag tag-green">Tools</span>
+        <span class="tag tag-green">Code Walkthrough</span>
+        <span class="tag">tools/</span>
+        <span class="tag">k8s_client.py</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP5 — The 7 Kubernetes Tools: Giving the Agent Eyes into Your Cluster</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"The agent is only as good as the data it can see. In this episode we build the seven tools that give kubefriend direct, live access to your Kubernetes cluster — and we'll see exactly how the LLM decides which one to call and when."</span>
+
+<span class="section">SCRIPT (0:30–19:00):</span>
+<span class="value">Section 1 — k8s_client.py: the shared Kubernetes connection (3 min)
+Open k8s_client.py. Explain that the Kubernetes Python SDK reads ~/.kube/config — the same file kubectl uses. Walk through the load order: try in-cluster config first (for when kubefriend itself runs inside Kubernetes), fall back to kubeconfig file. Explain os.path.expanduser() for tilde paths. Explain why the client is loaded once at module import time: it creates a singleton configuration that all tools share.
+
+Section 2 — How @tool docstrings become LLM instructions (2 min)
+Show get_pod_status with its docstring. Explain the exact mechanism: when .bind_tools(TOOLS) is called, LangChain reads each tool's name, docstring, and type hints and builds a JSON schema. That schema is injected into every LLM request. The LLM reads these descriptions and decides which tool to call based on the user's question. The docstring IS the tool's API contract with the LLM.
+
+Section 3 — get_pod_status (2 min)
+Walk through what it returns: pod phase, container states, restart count, last termination reason (OOMKilled, Error), pod conditions. Explain why "last termination reason" is critical — it tells you not what is happening now but what happened before the latest restart.
+
+Section 4 — get_pod_logs and get_pod_events (2 min)
+Explain when the agent uses each: logs when there are restarts and we need to see the application error; events when the pod is Pending or status is unclear (events show Kubernetes scheduler decisions, image pull errors, and backoff warnings).
+
+Section 5 — get_deployment and get_pvc (2 min)
+Deployment tool returns desired/ready/available replica counts, rollout conditions, and image versions — useful when the problem is a stalled rollout, not a single pod. PVC tool checks if storage is Bound, Pending, or Lost — a very common cause of pods stuck in Pending state.
+
+Section 6 — find_unused_pods (2 min)
+Explain evicted, Succeeded, Failed, Unknown pods and why they accumulate silently. Show how this tool identifies pods safe to delete, with configurable thresholds for age and restart count.
+
+Section 7 — get_crd_resources: the generic CRD tool (4 min)
+This is the most sophisticated tool. Explain CRDs (Custom Resource Definitions) — any team can extend Kubernetes with their own resource types. IBM watsonx uses a "workloads" CRD. OpenSearch, Milvus, Presto each have their own. Rather than writing a separate tool for each, get_crd_resources auto-discovers any CRD by querying the ApiextensionsV1Api, finding the correct group and version, then querying the resource. Supports filtering by type, state, name, namespace. Works for any CRD in any cluster.
+
+Section 8 — registry.py: the single source of truth (1 min)
+Show the file. It imports all seven tools and exports them as a TOOLS list. Adding a new tool = one import line + one entry in the list. No other files need to change.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- ~/.kube/config content shown annotated
+- @tool schema generation diagram (docstring → JSON schema → LLM request)
+- Each tool shown with its real output from the demo-crashloop test
+- CRD auto-discovery flow diagram
+- registry.py shown — simplicity of the file makes the point</span>
+
+<span class="section">CLOSING (19:00–20:30):</span>
+<span class="value">"Seven tools, one registry, and the LLM knows how to use all of them. Next episode we connect this to the outside world: the FastAPI backend and the SSE streaming that makes it all feel instant."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>k8s_client.py loads once — all tools share the same connection singleton</li>
+      <li>@tool docstring = what the LLM reads to decide when to call it — write it carefully</li>
+      <li>get_pod_status: last termination reason tells you why it died before, not just current state</li>
+      <li>Logs vs events: logs = app error; events = Kubernetes scheduler/infrastructure error</li>
+      <li>PVC Pending is a silent but very common cause of pods never starting</li>
+      <li>get_crd_resources: auto-discovers any CRD — one generic tool covers workloads, OpenSearch, Kafka, anything</li>
+      <li>registry.py: adding a tool = two lines, nothing else changes</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">kubeconfig structure</span>
+      <span class="visual-chip">Tool schema generation flow</span>
+      <span class="visual-chip">Real tool output from live test</span>
+      <span class="visual-chip">CRD auto-discovery diagram</span>
+      <span class="visual-chip">registry.py simplicity</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-rose">6</div>
+    <div class="ep-meta">
+      <h2>Episode 6 — FastAPI &amp; SSE: Streaming the Agent to the Browser</h2>
+      <div class="ep-duration">⏱ Suggested length: 18–20 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-blue">FastAPI</span>
+        <span class="tag tag-blue">SSE Streaming</span>
+        <span class="tag tag-green">Code Walkthrough</span>
+        <span class="tag">main.py</span>
+        <span class="tag">dashboard.py</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP6 — FastAPI and SSE: How We Stream the Agent to the Browser in Real Time</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"You've seen the agent reason step by step. But how does that get to the browser in real time, token by token? This episode is about the plumbing — FastAPI, Server-Sent Events, and conversation memory."</span>
+
+<span class="section">SCRIPT (0:30–17:00):</span>
+<span class="value">Section 1 — What is SSE and why not WebSocket? (3 min)
+Explain SSE: a simple HTTP connection that stays open. The server pushes events to the browser as they happen. The browser uses the built-in EventSource API — no library needed. Contrast with WebSocket: bidirectional, more complex, better for chat apps where the client also sends many messages. For kubefriend, the client sends one message and the server streams back a long response — SSE is the perfect fit.
+
+Section 2 — The SSE event format (2 min)
+Show the wire format: data: {"type": "token", "data": "Why"}\n\n. Every event is a JSON object with a type field (token, tool_call, tool_result, done, error) and a data payload. The frontend switches on the type to decide what to do with each event.
+
+Section 3 — main.py: the /api/chat endpoint (4 min)
+Open main.py. Show the POST /api/chat endpoint returning EventSourceResponse wrapping the _stream_agent async generator. Walk through _stream_agent: it looks up conversation history, appends the new user message, calls agent_graph.astream_events(), and maps LangGraph events to SSE events. Show each mapping: on_chat_model_stream → token (only for non-tool-call chunks), on_tool_start → tool_call, on_tool_end → tool_result, on_chain_end(LangGraph) → captures final messages for conversation store.
+
+Section 4 — Conversation memory (2 min)
+Explain conversation_store: a dict from conversation_id to list of past messages. On each request, the history is prepended to the new message before sending to the agent. This enables multi-turn context: "What about the other pod?" works because the agent still has the previous messages in its context.
+
+Section 5 — /api/dashboard: the live dashboard endpoint (2 min)
+Explain build_dashboard: it lists all pods in the namespace, classifies them as healthy/warning/critical, and for unhealthy pods runs a quick AI diagnosis concurrently. The frontend polls this endpoint every 30 seconds to keep the dashboard live.
+
+Section 6 — /api/llm/reset: hot-swap without restart (2 min)
+Show the LLM management endpoints. POST /api/llm/reset?provider=watsonx calls reset_llm_cache() which sets the global cache to None. The next chat request rebuilds the LLM with the new provider. No server restart needed — used by ./kubefriend llm watsonx.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- SSE vs WebSocket comparison diagram
+- SSE wire format shown in browser DevTools Network tab
+- main.py annotated with event flow arrows
+- Conversation store diagram: conversation_id → [messages]
+- LangGraph event → SSE event mapping table</span>
+
+<span class="section">CLOSING (17:00–18:30):</span>
+<span class="value">"The backend is complete. Next episode we build the frontend — the React UI that consumes these SSE events and turns them into a streaming chat experience with a live tool call panel."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>SSE vs WebSocket: SSE is simpler, unidirectional, perfect for one-response streaming</li>
+      <li>SSE wire format: data: {json}\n\n — the browser's EventSource handles the rest</li>
+      <li>LangGraph event → SSE event mapping: the translation layer between agent internals and browser</li>
+      <li>Only stream non-tool-call tokens — tool call chunks look like tokens but shouldn't be shown as text</li>
+      <li>conversation_store enables multi-turn: history is prepended on every request</li>
+      <li>/api/llm/reset clears the LLM cache — hot-swap without restart</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">SSE vs WebSocket diagram</span>
+      <span class="visual-chip">SSE wire format in DevTools</span>
+      <span class="visual-chip">main.py annotated walkthrough</span>
+      <span class="visual-chip">Event mapping table</span>
+      <span class="visual-chip">Conversation store diagram</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-slate">7</div>
+    <div class="ep-meta">
+      <h2>Episode 7 — React Frontend: Chat UI, Dashboard &amp; SSE Hooks</h2>
+      <div class="ep-duration">⏱ Suggested length: 16–18 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-blue">React</span>
+        <span class="tag tag-blue">TypeScript</span>
+        <span class="tag tag-green">Frontend</span>
+        <span class="tag">useChat.ts</span>
+        <span class="tag">Dashboard.tsx</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP7 — The React Frontend: Streaming Chat, Live Dashboard and SSE Hooks</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"The agent is running, the backend is streaming. Now we need a UI that makes it feel alive — tokens appearing as they're generated, tool calls shown in real time, a live dashboard that polls your cluster every 30 seconds. Let's build it."</span>
+
+<span class="section">SCRIPT (0:30–15:00):</span>
+<span class="value">Section 1 — App structure: Chat tab and Dashboard tab (2 min)
+Show App.tsx. Two tabs. Chat tab for natural-language conversations. Dashboard tab for the live pod health overview. Walk through the state: active tab, conversation ID (UUID generated once per page load), messages list.
+
+Section 2 — useChat hook: consuming SSE (4 min)
+This is the most important frontend file. Open useChat.ts. The hook opens a fetch POST to /api/chat. It reads the response body as a ReadableStream and parses each SSE event. On "token" events it appends to the current assistant message. On "tool_call" events it adds a tool call entry to the panel. On "tool_result" events it updates the matching tool call with its result. On "done" it marks streaming as complete. TypeScript types catch shape mismatches at compile time.
+
+Section 3 — ToolCallPanel: showing agent reasoning (2 min)
+Explain why the Tool Call Panel matters: it makes the agent transparent. The user can see exactly which tools were called, with what arguments, and what they returned. This builds trust — the answer is not a guess, it's backed by real data from the cluster. Walk through the component.
+
+Section 4 — useDashboard hook: polling (2 min)
+Open useDashboard.ts. It calls GET /api/dashboard every 30 seconds using a setInterval inside a useEffect. On each response it updates the pods list and summary counts. Explain the polling interval choice: 30 seconds is a good balance between freshness and backend load.
+
+Section 5 — Dashboard components (2 min)
+Walk through SummaryBar (total/running/warning/critical counts), PodTable (rows per pod with status badge, restart count, AI diagnosis, "Ask AI" button), NamespaceSelector (dropdown of all cluster namespaces). Show how "Ask AI" pre-fills the Chat tab with the pod name — connecting the two tabs.
+
+Section 6 — Why Vite? (1 min)
+Explain the dev proxy in vite.config.ts: /api requests are proxied to localhost:8000. This means the frontend code never contains a hardcoded backend URL. In production a real reverse proxy handles the same routing.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- App.tsx component tree diagram
+- useChat.ts SSE parsing flow diagram
+- ToolCallPanel in the live UI showing tool calls
+- Dashboard screenshot with SummaryBar, PodTable, AI diagnosis column
+- Vite proxy config shown</span>
+
+<span class="section">CLOSING (15:00–16:30):</span>
+<span class="value">"Frontend done, backend done, agent done. In the final episode we put it all together — a live end-to-end demo, the watsonx integration story, and a look at the roadmap."</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>useChat.ts is the core: SSE parsing, message building, tool call panel updates</li>
+      <li>ReadableStream with TextDecoder — how browser native APIs consume SSE without a library</li>
+      <li>ToolCallPanel = transparency — users see what data backed the answer</li>
+      <li>useDashboard: setInterval + useEffect = polling pattern, 30s interval</li>
+      <li>"Ask AI" button bridges Dashboard → Chat tab with pre-filled question</li>
+      <li>Vite proxy: /api → backend. No hardcoded URLs in frontend code</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">Component tree diagram</span>
+      <span class="visual-chip">SSE parsing hook code</span>
+      <span class="visual-chip">ToolCallPanel live screenshot</span>
+      <span class="visual-chip">Dashboard with AI diagnosis column</span>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="episode">
+  <div class="episode-header">
+    <div class="ep-number ep-indigo">8</div>
+    <div class="ep-meta">
+      <h2>Episode 8 — Live Demo, watsonx Deep Dive &amp; What's Next</h2>
+      <div class="ep-duration">⏱ Suggested length: 18–20 min</div>
+      <div class="ep-tags">
+        <span class="tag tag-purple">Live Demo</span>
+        <span class="tag tag-blue">watsonx</span>
+        <span class="tag tag-green">Debugging Story</span>
+        <span class="tag">Roadmap</span>
+      </div>
+    </div>
+  </div>
+  <div class="episode-body">
+
+    <div class="section-label">Video AI Prompt</div>
+    <div class="prompt-box">
+<span class="section">TITLE:</span> <span class="value">kubefriend EP8 — Live Demo, watsonx Deep Dive, and the Road Ahead</span>
+
+<span class="section">HOOK (0:00–0:30):</span>
+<span class="value">"Eight episodes. One fully working AI DevOps assistant. Let me show you it running live — a real pod crashing, a real question, real tool calls, a real answer. Then I'll tell you the story of debugging IBM watsonx, and where kubefriend goes from here."</span>
+
+<span class="section">SCRIPT (0:30–17:00):</span>
+<span class="value">Section 1 — Starting kubefriend (1 min)
+Show ./kubefriend start in the terminal. Show backend and frontend PID files written to .kubefriend/. Show the browser opening to localhost:5173. Show /healthz returning {"status":"ok","llm_provider":"watsonx"}.
+
+Section 2 — Live Demo: the crashloop question (5 min)
+Switch to the kubefriend UI. Type: "Why is my demo-crashloop pod failing in the kubefriend-test namespace?" Show it live in real time: tool calls appearing in the Tool Panel one by one — get_pod_status, get_pod_logs, get_pod_events. Show each tool result as it comes in. Show the final answer streaming token by token: Observation, Root Cause, Remediation, Prevention. Point out: 317 restarts, exit code 1, 4836 BackOff events — the agent found all of this automatically.
+
+Section 3 — Live Demo: the dashboard (2 min)
+Switch to Dashboard tab. Show the three pods: demo-healthy (green), demo-crashloop (red), demo-pending (yellow). Show the AI diagnosis column. Click "Ask AI" on demo-pending to show how it pre-fills the chat.
+
+Section 4 — The watsonx debugging story (5 min)
+Walk through the real debugging process. The error: "project_id not associated with a WML instance". Explain what WML is and why the error happened. Show the direct API probe used to confirm the fix worked before touching any code. Explain the model selection process: listed all 17 available models, filtered by instruction-tuned AND tool-calling support, picked llama-3-3-70b-instruct. Show the targeted tool-calling test before running the full agent. This section teaches a systematic debugging methodology: isolate, probe, verify, then integrate.
+
+Section 5 — ./kubefriend llm switch (1 min)
+Show ./kubefriend llm openai and ./kubefriend llm watsonx. Show the hot-swap working via /api/llm/reset. No restart needed.
+
+Section 6 — The roadmap (2 min)
+Walk through planned extensions: GitHub tool (link PRs to pod failures), ArgoCD tool (sync status), Helm tool (chart versions), Node pressure tool, IBM Cloud APIs. Explain the extension model: one new file, one line in registry.py, done. The agent learns to use the new tool from its docstring alone.</span>
+
+<span class="section">VISUALS:</span>
+<span class="value">- Terminal: ./kubefriend start output
+- kubefriend UI with live tool call panel filling in during the demo
+- Dashboard tab with colour-coded pod rows
+- Timeline diagram of the watsonx debugging steps
+- Model selection table: available models filtered by criteria
+- Roadmap slide with planned tools and extension steps</span>
+
+<span class="section">CLOSING (17:00–18:30):</span>
+<span class="value">"That's the full series. You've seen the idea, the architecture, every component, a live debugging story, and a roadmap. The code is on GitHub at github.com/sijics/kube-friend. Clone it, run it, extend it. If you build something with it, I'd love to see it. Thanks for watching."
+Show the GitHub repo URL prominently. Show a summary card of all 8 episodes.</span>
+    </div>
+
+    <div class="section-label">Key Talking Points for Presenter</div>
+    <ul class="points">
+      <li>Live demo — let it speak for itself: 3 tool calls, 12 seconds, real cluster data</li>
+      <li>Tool Panel transparency: users see every data point that backed the answer</li>
+      <li>watsonx debugging: isolate → probe API directly → verify model list → targeted tool test → integrate</li>
+      <li>Model selection criteria: instruction-tuned + tool-calling + strong reasoning</li>
+      <li>Hot-swap LLM without restart: /api/llm/reset + reset_llm_cache()</li>
+      <li>Extension is trivial: one file, one registry line, docstring = LLM contract</li>
+      <li>GitHub repo, invitation to contribute, roadmap tools</li>
+    </ul>
+
+    <div class="visual-row">
+      <span class="visual-chip">kubefriend start terminal</span>
+      <span class="visual-chip">Live chat demo recording</span>
+      <span class="visual-chip">Dashboard screenshot</span>
+      <span class="visual-chip">watsonx debug timeline</span>
+      <span class="visual-chip">Model selection table</span>
+      <span class="visual-chip">Roadmap slide</span>
+      <span class="visual-chip">GitHub repo card</span>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider" />
+
+
+<div style="background:#f7f8fa;border:1px solid #e5e7eb;border-radius:8px;padding:22px 26px;margin-bottom:32px">
+  <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#57606a;margin-bottom:14px">Production Tips for the Series</div>
+  <table style="font-size:13px">
+    <tr><th>Tip</th><th>Detail</th></tr>
+    <tr><td><strong>Consistent intro</strong></td><td>Open every episode with the same 5-second kubefriend logo + series title card. Builds brand recognition across the playlist.</td></tr>
+    <tr><td><strong>Code font</strong></td><td>Use a dark theme (VS Code Dark+) for all code screencasts. Increase font size to 18pt minimum so it's readable on mobile.</td></tr>
+    <tr><td><strong>Chapter markers</strong></td><td>Add YouTube chapter timestamps using the section headers in each script. Viewers jump to the exact concept they need.</td></tr>
+    <tr><td><strong>End cards</strong></td><td>Every episode should end with a card linking to: (1) next episode, (2) GitHub repo, (3) KT document.</td></tr>
+    <tr><td><strong>Show real errors</strong></td><td>Don't hide errors — showing the watsonx 403 and fixing it live is more valuable than a polished happy-path demo.</td></tr>
+    <tr><td><strong>Pinned comment</strong></td><td>Pin a comment on each video with the GitHub link, the file discussed, and timestamps for the key code sections.</td></tr>
+  </table>
+</div>
+
+<div class="footer">Made with IBM Bob</div>
+</div>
+</body>
+</html>

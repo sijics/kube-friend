@@ -1,0 +1,632 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>kubefriend — Knowledge Transfer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #1f2328;
+    background: #fff;
+    padding: 40px 24px 60px;
+  }
+  .page { max-width: 760px; margin: 0 auto; }
+
+  /* ── Cover ── */
+  .cover {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 36px 40px 32px;
+    margin-bottom: 40px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .cover h1 { font-size: 28px; font-weight: 700; color: #1f2328; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 15px; color: #57606a; margin-bottom: 20px; }
+  .cover-meta { display: flex; gap: 28px; flex-wrap: wrap; font-size: 13px; color: #57606a; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+  .cover-meta span strong { color: #1f2328; }
+
+  /* ── Sections ── */
+  h2 {
+    font-size: 17px; font-weight: 700; color: #1f2328;
+    border-bottom: 2px solid #3b82d4;
+    padding-bottom: 6px;
+    margin: 36px 0 14px;
+  }
+  h3 { font-size: 14px; font-weight: 700; color: #1f2328; margin: 20px 0 8px; }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Code / mono ── */
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  pre {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    overflow-x: auto;
+    margin: 10px 0 14px;
+    line-height: 1.55;
+  }
+  pre .comment { color: #57606a; }
+  pre .key { color: #3b82d4; }
+  pre .val { color: #7c5cd8; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 13px; }
+  th { background: #f7f8fa; text-align: left; padding: 7px 10px; border: 1px solid #e5e7eb; font-weight: 600; }
+  td { padding: 7px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfc; }
+
+  /* ── Diagram boxes ── */
+  .diagram {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 12px 0 16px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #1f2328;
+  }
+  .diagram .dim { color: #57606a; }
+  .diagram .hi  { color: #3b82d4; font-weight: 600; }
+  .diagram .hi2 { color: #7c5cd8; font-weight: 600; }
+
+  /* ── Callouts ── */
+  .callout {
+    border-left: 3px solid #3b82d4;
+    background: #f0f6ff;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .callout.purple { border-left-color: #7c5cd8; background: #f5f2ff; }
+  .callout.green  { border-left-color: #2da44e; background: #f0fff4; }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-green  { background: #d3f5e4; color: #1a7f37; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-grey   { background: #f1f3f5; color: #57606a; }
+
+  /* ── TOC ── */
+  .toc { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; margin-bottom: 32px; }
+  .toc h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #57606a; }
+  .toc ol { margin: 0; padding-left: 18px; }
+  .toc li { margin-bottom: 3px; font-size: 13px; }
+
+  /* ── Print ── */
+  @media print {
+    body { padding: 20px; }
+    h2 { page-break-before: always; }
+    .cover { page-break-after: always; }
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 56px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+
+<div class="cover">
+  <div class="cover-badge">Knowledge Transfer Document</div>
+  <h1>kubefriend</h1>
+  <div class="subtitle">AI-Powered DevOps Assistant for Kubernetes — Architecture, Tools &amp; How It Works</div>
+  <div class="cover-meta">
+    <span><strong>Project:</strong> kubefriend</span>
+    <span><strong>Repo:</strong> github.com/sijics/kube-friend</span>
+    <span><strong>Stack:</strong> Python · FastAPI · LangGraph · React · watsonx / OpenAI</span>
+    <span><strong>Status:</strong> <span class="badge badge-green">Production-ready v1</span></span>
+  </div>
+</div>
+
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li>What is kubefriend? — The Problem It Solves</li>
+    <li>High-Level Architecture</li>
+    <li>Tech Stack &amp; Why Each Was Chosen</li>
+    <li>The Agent Reasoning Loop (ReAct)</li>
+    <li>The 7 Kubernetes Tools</li>
+    <li>LLM Integration — OpenAI · watsonx · Ollama</li>
+    <li>How watsonx Was Debugged &amp; Made to Work</li>
+    <li>The Frontend — Chat &amp; Live Dashboard</li>
+    <li>Multi-Cluster Support</li>
+    <li>Project Structure</li>
+    <li>Running &amp; Operating kubefriend</li>
+    <li>End-to-End Walkthrough: "Why is my pod crashing?"</li>
+    <li>Extending kubefriend — Roadmap</li>
+  </ol>
+</div>
+
+
+<h2>1. What is kubefriend? — The Problem It Solves</h2>
+
+<p>Debugging a failing Kubernetes pod typically requires a developer to run 4–6 commands, read and correlate their outputs, and then reason about what went wrong:</p>
+
+<pre>kubectl get pod openrag-backend -n prod
+kubectl describe pod openrag-backend -n prod
+kubectl logs openrag-backend -n prod --previous
+kubectl get events -n prod --field-selector involvedObject.name=openrag-backend</pre>
+
+<p>This is mechanical, repetitive, and requires K8s expertise. <strong>kubefriend replaces this entire workflow with a single natural-language question:</strong></p>
+
+<div class="callout">
+  💬 <em>"Why is my openrag-backend pod failing?"</em><br /><br />
+  The assistant automatically calls the right tools, reads the data, correlates it, identifies the root cause, and streams back a structured explanation with exact kubectl remediation commands.
+</div>
+
+<h3>Who it's for</h3>
+<ul>
+  <li><strong>Developers</strong> who own services but aren't Kubernetes experts</li>
+  <li><strong>Platform engineers</strong> who want faster incident triage</li>
+  <li><strong>SREs</strong> doing on-call — check dashboard, ask AI, fix fast</li>
+  <li><strong>IBM Cloud / ROKS teams</strong> — includes CRD support for watsonx workloads, OpenSearch, Milvus, Presto</li>
+</ul>
+
+
+<h2>2. High-Level Architecture</h2>
+
+<div class="diagram">
+<span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│                        User's Browser                          │</span>
+<span class="dim">│   ┌──────────────────┐          ┌────────────────────────────┐ │</span>
+<span class="dim">│   │</span>  <span class="hi">Chat Tab</span>          <span class="dim">│          │</span>  <span class="hi">Dashboard Tab</span>             <span class="dim">│ │</span>
+<span class="dim">│   │</span>  Natural language <span class="dim">│          │</span>  Live pod health table     <span class="dim">│ │</span>
+<span class="dim">│   │</span>  SSE streaming    <span class="dim">│          │</span>  AI diagnosis per pod      <span class="dim">│ │</span>
+<span class="dim">│   └────────┬─────────┘          └──────────┬─────────────────┘ │</span>
+<span class="dim">└────────────┼────────────────────────────────┼───────────────────┘</span>
+             <span class="dim">│  POST /api/chat                 │  GET /api/dashboard</span>
+             <span class="dim">▼                                ▼</span>
+<span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>                 <span class="hi">FastAPI Backend  (port 8000)</span>                    <span class="dim">│</span>
+<span class="dim">│</span>                                                                 <span class="dim">│</span>
+<span class="dim">│   ┌───────────────────────────────────────────────────────┐    │</span>
+<span class="dim">│   │</span>               <span class="hi2">LangGraph ReAct Agent</span>                   <span class="dim">│    │</span>
+<span class="dim">│   │</span>                                                       <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi">LLM node</span>  ←→  <span class="hi">Tools node</span>  (loop until done)         <span class="dim">│    │</span>
+<span class="dim">│   │</span>      ↓                ↓                               <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi2">watsonx</span> /       7 K8s tools                        <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi2">OpenAI</span> /                                            <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi2">Ollama</span>                                              <span class="dim">│    │</span>
+<span class="dim">│   └───────────────────────────────────────────────────────┘    │</span>
+<span class="dim">└──────────────────────────────┬──────────────────────────────────┘</span>
+                               <span class="dim">│  Kubernetes Python SDK</span>
+                               <span class="dim">▼</span>
+<span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>              <span class="hi">Kubernetes Cluster</span>  (~/.kube/config)              <span class="dim">│</span>
+<span class="dim">│</span>   rancher-desktop · IBM ROKS · AWS EKS · any cluster           <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────────────┘</span>
+</div>
+
+<h3>Key design decisions</h3>
+<table>
+  <tr><th>Decision</th><th>Rationale</th></tr>
+  <tr><td>Backend runs natively on Mac (no Docker)</td><td><code>oc login</code> tunnels to localhost — Docker containers can't reach these tunnels. Native process avoids the networking problem entirely.</td></tr>
+  <tr><td>SSE (Server-Sent Events) for streaming</td><td>Tokens stream to the browser as they're generated — no waiting for the full answer. Users see the agent "thinking" in real time.</td></tr>
+  <tr><td>LLM initialised lazily</td><td>watsonx validates credentials against IBM Cloud at init time. Lazy init means the server starts and serves health/dashboard even if LLM credentials are temporarily broken.</td></tr>
+  <tr><td>Kubeconfig from <code>~/.kube/config</code></td><td>No re-implementation of auth — reuses whatever kubectl already uses. Switching clusters = <code>kubectl config use-context</code>.</td></tr>
+</table>
+
+
+<h2>3. Tech Stack &amp; Why Each Was Chosen</h2>
+
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+  <tr><td>Backend framework</td><td>FastAPI (Python)</td><td>Async-native, SSE support via <code>sse-starlette</code>, auto-generates OpenAPI docs. Python is the lingua franca of LLM tooling.</td></tr>
+  <tr><td>Agent framework</td><td>LangGraph</td><td>Provides the ReAct loop as a compilable graph. Handles tool routing, state management, and async streaming out of the box.</td></tr>
+  <tr><td>LLM abstraction</td><td>LangChain (BaseChatModel)</td><td>Uniform interface across OpenAI, watsonx, Ollama. Switching providers = one env var change.</td></tr>
+  <tr><td>LLM — cloud 1</td><td>IBM watsonx (LLaMA 3.3 70B via WML)</td><td>IBM Cloud hosted, enterprise-grade, available on existing IBM infra.</td></tr>
+  <tr><td>LLM — cloud 2</td><td>OpenAI GPT-4o</td><td>Best-in-class tool calling and reasoning; benchmark for correctness.</td></tr>
+  <tr><td>LLM — local</td><td>Ollama</td><td>Fully offline, zero cost, data stays on machine. Good for dev/air-gapped environments.</td></tr>
+  <tr><td>K8s client</td><td>kubernetes-python SDK</td><td>Official SDK; reads <code>~/.kube/config</code> automatically; supports all API groups including CRDs.</td></tr>
+  <tr><td>Frontend</td><td>React + Vite + TypeScript</td><td>Fast dev server, SSE hooks, component-based UI. <code>useChat</code> hook handles SSE parsing.</td></tr>
+  <tr><td>Deps / venv</td><td>uv</td><td>10× faster than pip, lockfile included, reproducible installs.</td></tr>
+  <tr><td>Package manifest</td><td>pyproject.toml</td><td>Modern Python packaging standard — replaces requirements.txt.</td></tr>
+</table>
+
+
+<h2>4. The Agent Reasoning Loop (ReAct)</h2>
+
+<p><strong>ReAct = Reasoning + Acting.</strong> The agent alternates between thinking (LLM) and acting (tool calls) in a loop until it has enough information to answer.</p>
+
+<div class="diagram">
+  User question
+       <span class="dim">↓</span>
+  <span class="hi">Agent node</span>  — LLM reads question + system prompt + previous tool results
+       <span class="dim">↓</span>
+  <span class="dim">Does the LLM want to call a tool?</span>
+       <span class="dim">├── YES → </span><span class="hi2">Tools node</span>  — executes the tool, appends ToolMessage to state
+       <span class="dim">│              ↓</span>
+       <span class="dim">│         back to Agent node  (loop)</span>
+       <span class="dim">│</span>
+       <span class="dim">└── NO  → </span>Stream final answer to browser  →  <span class="hi">END</span>
+</div>
+
+<h3>How the graph is wired (graph.py)</h3>
+<pre><span class="comment"># Two nodes</span>
+builder.add_node(<span class="val">"agent"</span>, agent_node)   <span class="comment"># LLM thinks</span>
+builder.add_node(<span class="val">"tools"</span>, ToolNode(TOOLS)) <span class="comment"># executes tool calls</span>
+
+<span class="comment"># Routing: after agent runs, check if it made a tool call</span>
+builder.add_conditional_edges(<span class="val">"agent"</span>, should_continue)
+<span class="comment"># "tools" → always return to agent</span>
+builder.add_edge(<span class="val">"tools"</span>, <span class="val">"agent"</span>)</pre>
+
+<h3>State — what gets passed between nodes</h3>
+<pre><span class="key">AgentState</span> = TypedDict with:
+  messages: list  <span class="comment"># full conversation history — grows with every node</span>
+                  <span class="comment"># HumanMessage → AIMessage(tool_calls) → ToolMessage → AIMessage(text)</span></pre>
+
+<h3>System prompt tells the LLM its rules</h3>
+<ul>
+  <li>Investigate before answering — always call at least one tool</li>
+  <li>Call tools one at a time, in logical order (status → logs → events → deployment → PVC)</li>
+  <li>Structure the final answer: <strong>Observation → Root Cause → Remediation → Prevention</strong></li>
+  <li>Include exact <code>kubectl</code> commands in remediation</li>
+  <li>Ask for namespace when not provided (except CRD queries — search all namespaces)</li>
+</ul>
+
+
+<h2>5. The 7 Kubernetes Tools</h2>
+
+<p>Each tool is a Python function decorated with <code>@tool</code>. LangChain reads the <strong>docstring</strong> to build the description the LLM uses to decide when and how to call it.</p>
+
+<table>
+  <tr><th>Tool</th><th>What it fetches</th><th>When the agent uses it</th></tr>
+  <tr>
+    <td><code>get_pod_status</code></td>
+    <td>Phase, container states, restart count, last termination reason (OOMKilled, Error), pod conditions</td>
+    <td>First tool called for any pod question — establishes the baseline state</td>
+  </tr>
+  <tr>
+    <td><code>get_pod_logs</code></td>
+    <td>Last N lines of container stdout/stderr (default 100)</td>
+    <td>After seeing CrashLoopBackOff or high restarts — logs reveal the application error</td>
+  </tr>
+  <tr>
+    <td><code>get_pod_events</code></td>
+    <td>Kubernetes events for a pod: scheduling failures, image pull errors, BackOff warnings</td>
+    <td>When pod is Pending or status is unclear — events show the scheduler's reasoning</td>
+  </tr>
+  <tr>
+    <td><code>get_deployment</code></td>
+    <td>Replica counts (desired/ready/available), rollout conditions, image versions, strategy</td>
+    <td>When the user asks about a deployment, or when pod problem may be deployment-level</td>
+  </tr>
+  <tr>
+    <td><code>get_pvc</code></td>
+    <td>PVC names, status (Bound/Pending/Lost), capacity, storage class, bound PV</td>
+    <td>When a pod is stuck Pending — may be waiting for a PVC to bind</td>
+  </tr>
+  <tr>
+    <td><code>find_unused_pods</code></td>
+    <td>Evicted, Succeeded, Failed, Unknown pods; long-running zero-restart pods</td>
+    <td>Cleanup queries: "what pods are safe to delete?"</td>
+  </tr>
+  <tr>
+    <td><code>get_crd_resources</code></td>
+    <td>Any Custom Resource Definition — auto-discovers group/version, supports filter by type/state/name/namespace</td>
+    <td>IBM watsonx workloads, OpenSearch clusters, Milvus, Presto, Kafka, or any CRD in the cluster</td>
+  </tr>
+</table>
+
+<div class="callout purple">
+  <strong>How tool discovery works (get_crd_resources):</strong> Rather than hard-coding IBM-specific CRD group names, the tool calls the Kubernetes <code>ApiextensionsV1Api</code> to scan <em>all</em> CRDs and match by plural/singular/kind name. This makes it generic — it works for any CRD in any cluster automatically.
+</div>
+
+<h3>How to add a new tool</h3>
+<ol>
+  <li>Create <code>backend/app/tools/my_tool.py</code> with a <code>@tool</code>-decorated function</li>
+  <li>Write a clear docstring — this is what the LLM reads to decide when to call it</li>
+  <li>Add it to <code>TOOLS</code> list in <code>backend/app/tools/registry.py</code></li>
+  <li>Restart the backend — the agent picks it up automatically, no other changes needed</li>
+</ol>
+
+
+<h2>6. LLM Integration — OpenAI · watsonx · Ollama</h2>
+
+<p>All three providers are behind a single factory function. The rest of the codebase never imports OpenAI or watsonx directly — it only calls <code>get_llm()</code> and gets back a standard <code>BaseChatModel</code>.</p>
+
+<pre><span class="comment"># .env</span>
+<span class="key">LLM_PROVIDER</span>=<span class="val">watsonx</span>   <span class="comment"># or openai or ollama</span></pre>
+
+<table>
+  <tr><th></th><th>OpenAI GPT-4o</th><th>IBM watsonx (LLaMA 3.3 70B)</th><th>Ollama (local)</th></tr>
+  <tr><td>Where it runs</td><td>OpenAI cloud</td><td>IBM Cloud (WML)</td><td>Your machine</td></tr>
+  <tr><td>Cost</td><td>Pay per token</td><td>IBM Cloud credits</td><td>Free / offline</td></tr>
+  <tr><td>Data privacy</td><td>Leaves machine</td><td>Leaves machine</td><td>Never leaves machine</td></tr>
+  <tr><td>Tool calling</td><td>✅ Excellent</td><td>✅ Strong (LLaMA 3.3)</td><td>✅ Good (llama3.2, qwen2.5)</td></tr>
+  <tr><td>Required env vars</td><td><code>OPENAI_API_KEY</code></td><td><code>WATSONX_API_KEY</code><br /><code>WATSONX_PROJECT_ID</code><br /><code>WATSONX_URL</code><br /><code>WATSONX_MODEL_ID</code></td><td><code>OLLAMA_MODEL</code><br /><code>OLLAMA_BASE_URL</code></td></tr>
+  <tr><td>Switch command</td><td><code>./kubefriend llm openai</code></td><td><code>./kubefriend llm watsonx</code></td><td><code>./kubefriend llm ollama</code></td></tr>
+</table>
+
+<div class="callout">
+  <strong>Hot-swap without restart:</strong> <code>POST /api/llm/reset?provider=openai</code> clears the LLM cache in memory and sets the provider env var. The next chat request builds a fresh LLM instance. No server restart needed.
+</div>
+
+
+<h2>7. How watsonx Was Debugged &amp; Made to Work</h2>
+
+<p>This section is a case study in diagnosing a real cloud integration issue.</p>
+
+<h3>The error</h3>
+<pre>403 project_id 4be90509-... is not associated with a WML instance</pre>
+
+<h3>Root cause</h3>
+<p>A watsonx project exists in IBM Cloud, but it had no <strong>Watson Machine Learning (WML) service instance</strong> associated with it. The LLM API requires a project to be linked to a WML instance — otherwise it can't run model inference.</p>
+
+<h3>Fix applied in IBM Cloud console</h3>
+<ol>
+  <li>Open <strong>dataplatform.cloud.ibm.com</strong> → select the project</li>
+  <li>Go to <strong>Manage → Services &amp; integrations</strong></li>
+  <li>Click <strong>Associate service</strong> → select or create a Watson Machine Learning instance</li>
+</ol>
+
+<h3>How we verified the fix</h3>
+<pre><span class="comment"># Test before touching any code — probe the same API ChatWatsonx calls internally</span>
+client = APIClient(credentials=Credentials(url=..., api_key=...), project_id=...)
+specs = client.foundation_models.get_model_specs()
+<span class="comment"># Result: OK — 17 models available  ← WML now working</span></pre>
+
+<h3>How we found the right model</h3>
+<p>The model configured in <code>.env</code> (<code>ibm/granite-3-8b-instruct</code>) was not provisioned on this WML instance. We listed all available models and selected based on:</p>
+<ul>
+  <li><strong>Instruction-tuned</strong> — base models can't follow "call this tool" instructions</li>
+  <li><strong>Tool / function calling support</strong> — must return structured <code>tool_calls</code> JSON</li>
+  <li><strong>Strong reasoning</strong> — multi-hop K8s diagnosis needs good chain-of-thought</li>
+</ul>
+<p>Selected: <strong><code>meta-llama/llama-3-3-70b-instruct</code></strong> — best available model on the instance, full tool-calling support, proven in LangGraph agents.</p>
+
+<h3>Resilience fix added to the codebase</h3>
+<p>The original code built the LLM at <strong>module import time</strong> — if credentials fail, the server crashes on startup. We changed it to <strong>lazy initialisation</strong>: the LLM is only built on the first chat request. Health checks and the dashboard stay available even if LLM credentials are broken.</p>
+
+
+<h2>8. The Frontend — Chat &amp; Live Dashboard</h2>
+
+<h3>Chat Tab</h3>
+<ul>
+  <li>Text input → POST to <code>/api/chat</code> → SSE stream</li>
+  <li>SSE events: <code>token</code> (stream text), <code>tool_call</code> (tool started), <code>tool_result</code> (tool returned), <code>done</code>, <code>error</code></li>
+  <li><strong>Tool Call Panel</strong> (right sidebar) — shows every tool call and its raw result in real time so users can see exactly what the agent investigated</li>
+  <li>Multi-turn conversation — history stored in memory per <code>conversation_id</code></li>
+</ul>
+
+<h3>Dashboard Tab</h3>
+<ul>
+  <li>Polls <code>GET /api/dashboard?namespace=X</code> every <strong>30 seconds</strong></li>
+  <li>Summary bar: Total / Running / Warning / Critical pod counts</li>
+  <li>Pod table: name, status badge, restarts, age, node, AI diagnosis, suggestion, "Ask AI" button</li>
+  <li>Namespace selector — dropdown of all namespaces in the cluster</li>
+  <li>"Ask AI" pre-fills the chat tab with the pod name for one-click deep diagnosis</li>
+</ul>
+
+<h3>SSE hook (useChat.ts)</h3>
+<pre><span class="comment">// Browser opens a persistent HTTP connection</span>
+const source = new EventSource(<span class="val">"/api/chat"</span>, ...)
+source.onmessage = (e) =&gt; {
+  const event = JSON.parse(e.data)
+  <span class="key">if</span> (event.type === <span class="val">"token"</span>)       appendToken(event.data)
+  <span class="key">if</span> (event.type === <span class="val">"tool_call"</span>)   showToolCall(event.data)
+  <span class="key">if</span> (event.type === <span class="val">"done"</span>)        setComplete()
+}</pre>
+
+
+<h2>9. Multi-Cluster Support</h2>
+
+<p>kubefriend reads <code>~/.kube/config</code> — the same file <code>kubectl</code> uses. Switching clusters requires no code changes:</p>
+
+<pre><span class="comment"># See all available clusters</span>
+./kubefriend contexts
+
+<span class="comment"># Switch to local Rancher Desktop</span>
+./kubefriend switch rancher-desktop
+
+<span class="comment"># Switch to IBM ROKS (requires oc login tunnel first)</span>
+./kubefriend switch lh-wxd-dev-us-south-db-roks24-oc
+
+<span class="comment"># Switch to AWS EKS</span>
+./kubefriend switch arn:aws:eks:us-east-1:123:cluster/my-eks</pre>
+
+<p>The <code>kubefriend switch</code> command runs <code>kubectl config use-context &lt;name&gt;</code> and restarts the backend process automatically.</p>
+
+<div class="callout">
+  <strong>ROKS / OpenShift note:</strong> <code>oc login</code> creates a tunnel to the cluster API on <code>localhost:PORT</code> on your Mac. The backend reads this directly from kubeconfig — no special handling needed when running natively.
+</div>
+
+
+<h2>10. Project Structure</h2>
+
+<pre>kubefriend/
+<span class="dim">├── backend/</span>
+<span class="dim">│   ├── app/</span>
+<span class="dim">│   │   ├── agent/</span>
+<span class="dim">│   │   │   ├── graph.py</span>       <span class="comment">  LangGraph ReAct graph — nodes, edges, routing</span>
+<span class="dim">│   │   │   ├── prompts.py</span>     <span class="comment">  System prompt — rules the LLM must follow</span>
+<span class="dim">│   │   │   └── state.py</span>       <span class="comment">  AgentState TypedDict — message history</span>
+<span class="dim">│   │   ├── llm/</span>
+<span class="dim">│   │   │   └── factory.py</span>     <span class="comment">  get_llm() — builds OpenAI / watsonx / Ollama</span>
+<span class="dim">│   │   ├── tools/</span>
+<span class="dim">│   │   │   ├── registry.py</span>    <span class="comment">  TOOLS list — single source of truth</span>
+<span class="dim">│   │   │   ├── k8s_client.py</span>  <span class="comment">  Loads kubeconfig, exposes core_v1() / apps_v1()</span>
+<span class="dim">│   │   │   ├── pod_status.py</span>
+<span class="dim">│   │   │   ├── pod_logs.py</span>
+<span class="dim">│   │   │   ├── pod_events.py</span>
+<span class="dim">│   │   │   ├── deployment.py</span>
+<span class="dim">│   │   │   ├── pvc.py</span>
+<span class="dim">│   │   │   ├── unused_pods.py</span>
+<span class="dim">│   │   │   └── crd_resource.py</span> <span class="comment"> Generic CRD tool — auto-discovers group/version</span>
+<span class="dim">│   │   ├── main.py</span>            <span class="comment">  FastAPI app — /api/chat (SSE), /api/dashboard, /healthz</span>
+<span class="dim">│   │   ├── dashboard.py</span>       <span class="comment">  Pod health scanner with concurrent AI diagnosis</span>
+<span class="dim">│   │   └── schemas.py</span>         <span class="comment">  Pydantic models — ChatRequest, DashboardResponse</span>
+<span class="dim">│   └── pyproject.toml</span>         <span class="comment">  uv deps — fastapi, langgraph, langchain-ibm, kubernetes</span>
+<span class="dim">├── frontend/</span>
+<span class="dim">│   └── src/</span>
+<span class="dim">│       ├── App.tsx</span>            <span class="comment">  Chat + Dashboard tabs</span>
+<span class="dim">│       ├── components/</span>        <span class="comment">  Dashboard, PodTable, SummaryBar, NamespaceSelector</span>
+<span class="dim">│       └── hooks/</span>             <span class="comment">  useChat (SSE), useDashboard (polling)</span>
+<span class="dim">├── kubefriend</span>                 <span class="comment">  CLI: start / stop / switch / llm / contexts / logs</span>
+<span class="dim">├── install.sh</span>                 <span class="comment">  One-shot setup</span>
+<span class="dim">├── run.sh</span>                     <span class="comment">  Start backend + frontend natively</span>
+<span class="dim">└── .env</span>                       <span class="comment">  LLM_PROVIDER, API keys, KUBECONFIG_PATH</span></pre>
+
+
+<h2>11. Running &amp; Operating kubefriend</h2>
+
+<h3>First-time setup</h3>
+<pre>git clone https://github.com/sijics/kube-friend
+cd kube-friend
+./install.sh            <span class="comment"># creates venv, installs deps, builds frontend</span>
+cp .env.example .env    <span class="comment"># fill in your API keys</span></pre>
+
+<h3>Start / stop</h3>
+<pre>./kubefriend start      <span class="comment"># backend on :8000, frontend on :5173</span>
+./kubefriend stop       <span class="comment"># kill both processes</span>
+./kubefriend restart    <span class="comment"># stop + start</span>
+./kubefriend status     <span class="comment"># show running PIDs + health check</span>
+./kubefriend logs       <span class="comment"># tail backend log</span></pre>
+
+<h3>LLM switching</h3>
+<pre>./kubefriend llm openai     <span class="comment"># switch to GPT-4o</span>
+./kubefriend llm watsonx    <span class="comment"># switch to IBM watsonx (LLaMA 3.3 70B)</span>
+./kubefriend llm ollama     <span class="comment"># switch to local Ollama</span></pre>
+
+<h3>Cluster switching</h3>
+<pre>./kubefriend contexts                     <span class="comment"># list all kubeconfig contexts</span>
+./kubefriend switch rancher-desktop       <span class="comment"># local cluster</span>
+./kubefriend switch my-roks-context       <span class="comment"># ROKS (run oc login first)</span></pre>
+
+<h3>Key API endpoints</h3>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+  <tr><td><code>/healthz</code></td><td>GET</td><td>Health check — returns status + active LLM provider</td></tr>
+  <tr><td><code>/api/chat</code></td><td>POST</td><td>Main chat — accepts message + conversation_id, streams SSE</td></tr>
+  <tr><td><code>/api/dashboard</code></td><td>GET</td><td>Pod health scan for a namespace — used by Dashboard tab</td></tr>
+  <tr><td><code>/api/llm</code></td><td>GET</td><td>Return current LLM provider</td></tr>
+  <tr><td><code>/api/llm/reset</code></td><td>POST</td><td>Hot-swap provider: <code>?provider=openai|watsonx|ollama</code></td></tr>
+</table>
+
+
+<h2>12. End-to-End Walkthrough: "Why is my pod crashing?"</h2>
+
+<p>This is exactly what happened when tested live against the <code>demo-crashloop</code> pod in the <code>kubefriend-test</code> namespace using watsonx (LLaMA 3.3 70B).</p>
+
+<div class="callout green">
+  <strong>User question:</strong> "Why is my demo-crashloop pod failing in the kubefriend-test namespace?"
+</div>
+
+<h3>Step 1 — Agent calls get_pod_status</h3>
+<pre>Tool: get_pod_status(namespace="kubefriend-test", pod_name="demo-crashloop")
+
+Result:
+  Phase     : Running
+  Restarts  : 317
+  State     : Waiting — CrashLoopBackOff
+  LastState : Error (exit=1) at 2026-08-17 13:39:55</pre>
+
+<h3>Step 2 — Agent calls get_pod_logs (sees exit=1, needs app error)</h3>
+<pre>Tool: get_pod_logs(namespace="kubefriend-test", pod_name="demo-crashloop", tail_lines="100")
+
+Result:
+  2026-08-17T13:39:53Z starting       <span class="comment"># container printed "starting" then immediately exited</span></pre>
+
+<h3>Step 3 — Agent calls get_pod_events (confirms pattern)</h3>
+<pre>Tool: get_pod_events(namespace="kubefriend-test", pod_name="demo-crashloop")
+
+Result:
+  ⚠ BackOff (x4836) — Back-off restarting failed container app</pre>
+
+<h3>Step 4 — Agent streams final answer</h3>
+<pre>Observation
+  Pod demo-crashloop is in CrashLoopBackOff with 317 restarts.
+  Container exits with code 1 immediately after printing "starting".
+  BackOff event has fired 4836 times.
+
+Root Cause
+  The container application exits with a non-zero exit code (1) on startup,
+  indicating the process is crashing before it can run successfully.
+
+Remediation
+  1. Inspect the container entrypoint / command for startup errors
+  2. Check if required env vars or config files are missing
+  3. kubectl describe pod demo-crashloop -n kubefriend-test
+  4. kubectl logs demo-crashloop -n kubefriend-test --previous
+
+Prevention
+  Add liveness and readiness probes to detect crashes early.
+  Set resource limits to prevent OOM-triggered exits.</pre>
+
+<p>Total time: <strong>~12 seconds</strong> from question to complete answer. Three K8s API calls, zero manual kubectl commands.</p>
+
+
+<h2>13. Extending kubefriend — Roadmap</h2>
+
+<table>
+  <tr><th>Planned Tool</th><th>What it enables</th><th>Status</th></tr>
+  <tr><td>GitHub integration</td><td>"What changed in the last deploy?" — PR diff, commit history</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>ArgoCD</td><td>"Is my ArgoCD sync healthy?" — app health, sync status, diff</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Helm</td><td>"What version of chart X is deployed?" — release history, values</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Node pressure</td><td>"Which node is under memory pressure?" — node conditions, capacity</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>IBM Cloud APIs</td><td>Resource group status, CIS, Object Storage health</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>OpenSearch</td><td>Index health, shard status via CRD + REST API</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Conversation persistence</td><td>Survive server restarts — use LangGraph checkpointer with SQLite</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Slack / Teams integration</td><td>Ask kubefriend from chat — webhook receiver</td><td><span class="badge badge-grey">Future</span></td></tr>
+</table>
+
+<div class="callout purple">
+  <strong>Adding any new tool takes ~15 minutes:</strong> create <code>tools/my_tool.py</code>, write a clear docstring, add to <code>registry.py</code>, restart. The agent automatically learns to use it from the docstring alone.
+</div>
+
+
+<div class="footer">Made with IBM Bob</div>
+
+</div>
+</body>
+</html>

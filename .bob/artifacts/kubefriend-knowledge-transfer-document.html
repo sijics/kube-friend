@@ -1,0 +1,801 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>kubefriend — Knowledge Transfer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #1f2328;
+    background: #fff;
+    padding: 40px 24px 60px;
+  }
+  .page { max-width: 760px; margin: 0 auto; }
+
+  .cover {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 36px 40px 32px;
+    margin-bottom: 40px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .cover h1 { font-size: 28px; font-weight: 700; color: #1f2328; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 15px; color: #57606a; margin-bottom: 20px; }
+  .cover-meta { display: flex; gap: 28px; flex-wrap: wrap; font-size: 13px; color: #57606a; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+  .cover-meta span strong { color: #1f2328; }
+
+  h2 {
+    font-size: 17px; font-weight: 700; color: #1f2328;
+    border-bottom: 2px solid #3b82d4;
+    padding-bottom: 6px;
+    margin: 40px 0 14px;
+  }
+  h3 { font-size: 14px; font-weight: 700; color: #1f2328; margin: 22px 0 8px; }
+  h4 { font-size: 13px; font-weight: 700; color: #57606a; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  pre {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    overflow-x: auto;
+    margin: 10px 0 14px;
+    line-height: 1.6;
+  }
+  pre .comment { color: #57606a; }
+  pre .key     { color: #3b82d4; }
+  pre .val     { color: #7c5cd8; }
+  pre .hi      { font-weight: 700; color: #1f2328; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 13px; }
+  th { background: #f7f8fa; text-align: left; padding: 7px 10px; border: 1px solid #e5e7eb; font-weight: 600; }
+  td { padding: 7px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfc; }
+
+  .diagram {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 12px 0 16px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #1f2328;
+    white-space: pre;
+  }
+  .diagram .dim  { color: #57606a; }
+  .diagram .hi   { color: #3b82d4; font-weight: 700; }
+  .diagram .hi2  { color: #7c5cd8; font-weight: 700; }
+  .diagram .hi3  { color: #2da44e; font-weight: 700; }
+
+  .callout {
+    border-left: 3px solid #3b82d4;
+    background: #f0f6ff;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .callout.purple { border-left-color: #7c5cd8; background: #f5f2ff; }
+  .callout.green  { border-left-color: #2da44e; background: #f0fff4; }
+  .callout.yellow { border-left-color: #d97706; background: #fffbeb; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-green  { background: #d3f5e4; color: #1a7f37; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-grey   { background: #f1f3f5; color: #57606a; }
+
+  .layer-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .layer-header {
+    background: #f7f8fa;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e5e7eb;
+    color: #57606a;
+    text-transform: uppercase;
+  }
+  .layer-header.blue   { background: #dbeafe; color: #1e40af; border-bottom-color: #bfdbfe; }
+  .layer-header.purple { background: #ede9fe; color: #5b21b6; border-bottom-color: #ddd6fe; }
+  .layer-header.green  { background: #d3f5e4; color: #1a7f37; border-bottom-color: #bbf7d0; }
+  .layer-body { padding: 10px 14px; font-size: 13px; }
+
+  .toc { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px 20px; margin-bottom: 32px; }
+  .toc h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #57606a; }
+  .toc ol { margin: 0; padding-left: 18px; }
+  .toc li { margin-bottom: 3px; font-size: 13px; }
+  .toc .new { color: #3b82d4; font-weight: 600; font-size: 11px; margin-left: 6px; }
+
+  @media print {
+    body { padding: 20px; }
+    h2 { page-break-before: always; }
+    .cover { page-break-after: always; }
+  }
+
+  .footer {
+    margin-top: 56px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+
+<div class="cover">
+  <div class="cover-badge">Knowledge Transfer Document</div>
+  <h1>kubefriend</h1>
+  <div class="subtitle">AI-Powered DevOps Assistant for Kubernetes — Architecture, Tools &amp; How It Works</div>
+  <div class="cover-meta">
+    <span><strong>Project:</strong> kubefriend</span>
+    <span><strong>Repo:</strong> github.com/sijics/kube-friend</span>
+    <span><strong>Stack:</strong> Python · FastAPI · LangChain · LangGraph · React · watsonx / OpenAI</span>
+    <span><strong>Status:</strong> <span class="badge badge-green">Production-ready v1</span></span>
+  </div>
+</div>
+
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li>What is kubefriend? — The Problem It Solves</li>
+    <li>High-Level Architecture</li>
+    <li>Tech Stack &amp; Why Each Was Chosen</li>
+    <li>What is LangChain? — The LLM Abstraction Layer <span class="new">NEW</span></li>
+    <li>What is LangGraph? — The Agent Orchestration Framework <span class="new">NEW</span></li>
+    <li>The ReAct Flow — How kubefriend Reasons Step by Step <span class="new">NEW</span></li>
+    <li>The Agent Reasoning Loop (ReAct) — Code Deep Dive</li>
+    <li>The 7 Kubernetes Tools</li>
+    <li>LLM Integration — OpenAI · watsonx · Ollama</li>
+    <li>How watsonx Was Debugged &amp; Made to Work</li>
+    <li>The Frontend — Chat &amp; Live Dashboard</li>
+    <li>Multi-Cluster Support</li>
+    <li>Project Structure</li>
+    <li>Running &amp; Operating kubefriend</li>
+    <li>End-to-End Walkthrough: "Why is my pod crashing?"</li>
+    <li>Extending kubefriend — Roadmap</li>
+  </ol>
+</div>
+
+
+<h2>1. What is kubefriend? — The Problem It Solves</h2>
+
+<p>Debugging a failing Kubernetes pod typically requires a developer to run 4–6 commands, read and correlate their outputs, and then reason about what went wrong:</p>
+
+<pre>kubectl get pod openrag-backend -n prod
+kubectl describe pod openrag-backend -n prod
+kubectl logs openrag-backend -n prod --previous
+kubectl get events -n prod --field-selector involvedObject.name=openrag-backend</pre>
+
+<p>This is mechanical, repetitive, and requires K8s expertise. <strong>kubefriend replaces this entire workflow with a single natural-language question:</strong></p>
+
+<div class="callout">
+  💬 <em>"Why is my openrag-backend pod failing?"</em><br /><br />
+  The assistant automatically calls the right tools, reads the data, correlates it, identifies the root cause, and streams back a structured explanation with exact kubectl remediation commands.
+</div>
+
+<h3>Who it's for</h3>
+<ul>
+  <li><strong>Developers</strong> who own services but aren't Kubernetes experts</li>
+  <li><strong>Platform engineers</strong> who want faster incident triage</li>
+  <li><strong>SREs</strong> doing on-call — check dashboard, ask AI, fix fast</li>
+  <li><strong>IBM Cloud / ROKS teams</strong> — includes CRD support for watsonx workloads, OpenSearch, Milvus, Presto</li>
+</ul>
+
+
+<h2>2. High-Level Architecture</h2>
+
+<div class="diagram"><span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│                        User's Browser                          │</span>
+<span class="dim">│   ┌──────────────────┐          ┌────────────────────────────┐ │</span>
+<span class="dim">│   │</span>  <span class="hi">Chat Tab</span>          <span class="dim">│          │</span>  <span class="hi">Dashboard Tab</span>             <span class="dim">│ │</span>
+<span class="dim">│   │</span>  Natural language <span class="dim">│          │</span>  Live pod health table     <span class="dim">│ │</span>
+<span class="dim">│   │</span>  SSE streaming    <span class="dim">│          │</span>  AI diagnosis per pod      <span class="dim">│ │</span>
+<span class="dim">│   └────────┬─────────┘          └──────────┬─────────────────┘ │</span>
+<span class="dim">└────────────┼────────────────────────────────┼───────────────────┘</span>
+             <span class="dim">│  POST /api/chat                 │  GET /api/dashboard</span>
+             <span class="dim">▼                                ▼</span>
+<span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>                 <span class="hi">FastAPI Backend  (port 8000)</span>                    <span class="dim">│</span>
+<span class="dim">│</span>                                                                 <span class="dim">│</span>
+<span class="dim">│   ┌───────────────────────────────────────────────────────┐    │</span>
+<span class="dim">│   │</span>               <span class="hi2">LangGraph ReAct Agent</span>                   <span class="dim">│    │</span>
+<span class="dim">│   │</span>                                                       <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi">LLM node</span>  ←→  <span class="hi">Tools node</span>  (loop until done)         <span class="dim">│    │</span>
+<span class="dim">│   │</span>      ↓                ↓                               <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi2">LangChain</span>       7 K8s tools                        <span class="dim">│    │</span>
+<span class="dim">│   │</span>   <span class="hi2">BaseChatModel</span>                                       <span class="dim">│    │</span>
+<span class="dim">│   │</span>   (watsonx /                                          <span class="dim">│    │</span>
+<span class="dim">│   │</span>    OpenAI /                                           <span class="dim">│    │</span>
+<span class="dim">│   │</span>    Ollama)                                            <span class="dim">│    │</span>
+<span class="dim">│   └───────────────────────────────────────────────────────┘    │</span>
+<span class="dim">└──────────────────────────────┬──────────────────────────────────┘</span>
+                               <span class="dim">│  Kubernetes Python SDK</span>
+                               <span class="dim">▼</span>
+<span class="dim">┌─────────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>              <span class="hi">Kubernetes Cluster</span>  (~/.kube/config)              <span class="dim">│</span>
+<span class="dim">│</span>   rancher-desktop · IBM ROKS · AWS EKS · any cluster           <span class="dim">│</span>
+<span class="dim">└─────────────────────────────────────────────────────────────────┘</span></div>
+
+
+<h2>3. Tech Stack &amp; Why Each Was Chosen</h2>
+
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+  <tr><td>Backend framework</td><td>FastAPI (Python)</td><td>Async-native, SSE support, auto OpenAPI docs. Python is the standard for LLM tooling.</td></tr>
+  <tr><td>LLM abstraction</td><td>LangChain</td><td>Uniform interface across OpenAI, watsonx, Ollama. Switching LLMs = one env var.</td></tr>
+  <tr><td>Agent orchestration</td><td>LangGraph</td><td>ReAct loop as a compilable graph — handles tool routing, state, and async streaming.</td></tr>
+  <tr><td>LLM — cloud 1</td><td>IBM watsonx (LLaMA 3.3 70B)</td><td>IBM Cloud hosted, enterprise-grade, available on existing IBM infra.</td></tr>
+  <tr><td>LLM — cloud 2</td><td>OpenAI GPT-4o</td><td>Best-in-class tool calling and reasoning.</td></tr>
+  <tr><td>LLM — local</td><td>Ollama</td><td>Fully offline, zero cost, data stays on machine.</td></tr>
+  <tr><td>K8s client</td><td>kubernetes-python SDK</td><td>Official SDK; reads <code>~/.kube/config</code>; supports all API groups including CRDs.</td></tr>
+  <tr><td>Frontend</td><td>React + Vite + TypeScript</td><td>Fast dev server, SSE hooks, component-based UI.</td></tr>
+  <tr><td>Deps / venv</td><td>uv</td><td>10× faster than pip, lockfile included, reproducible installs.</td></tr>
+</table>
+
+
+<h2>4. What is LangChain? — The LLM Abstraction Layer</h2>
+
+<p><strong>LangChain</strong> is an open-source Python library that provides a <em>uniform interface</em> for working with any Large Language Model — regardless of which provider it comes from.</p>
+
+<h3>The problem LangChain solves</h3>
+<p>Every LLM provider has a different SDK, a different API shape, and a different way to send messages:</p>
+
+<pre><span class="comment"># Without LangChain — different code for every LLM</span>
+
+<span class="comment"># OpenAI</span>
+client = openai.OpenAI()
+response = client.chat.completions.create(model="gpt-4o", messages=[...])
+text = response.choices[0].message.content
+
+<span class="comment"># IBM watsonx</span>
+model = ModelInference(model_id="llama-3-3-70b", credentials=..., project_id=...)
+response = model.chat(messages=[...])
+text = response["choices"][0]["message"]["content"]
+
+<span class="comment"># Ollama</span>
+client = ollama.Client()
+response = client.chat(model="llama3", messages=[...])
+text = response["message"]["content"]</pre>
+
+<p>With LangChain, all three look identical:</p>
+
+<pre><span class="comment"># With LangChain — same code regardless of LLM</span>
+from langchain_core.messages import HumanMessage
+
+response = llm.invoke([HumanMessage(content="Why is my pod failing?")])
+text = response.content  <span class="comment"># always the same, no matter which LLM</span></pre>
+
+<h3>The key abstraction: BaseChatModel</h3>
+<p>Every LLM in LangChain implements the <code>BaseChatModel</code> interface. It defines three methods that every provider must support:</p>
+
+<table>
+  <tr><th>Method</th><th>What it does</th><th>Used in kubefriend</th></tr>
+  <tr><td><code>.invoke(messages)</code></td><td>Send messages, get one response back</td><td>Agent node calling the LLM each loop iteration</td></tr>
+  <tr><td><code>.bind_tools(tools)</code></td><td>Attach a list of tools the LLM can call</td><td>Called once at startup — tells LLM about our 7 K8s tools</td></tr>
+  <tr><td><code>.astream_events()</code></td><td>Run async and stream back events as they happen</td><td>SSE token streaming to the browser</td></tr>
+</table>
+
+<h3>How LangChain is used in kubefriend</h3>
+
+<div class="layer-box">
+  <div class="layer-header blue">factory.py — build any LLM with one function</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="comment"># get_llm() returns a BaseChatModel — the rest of the code never</span>
+<span class="comment"># knows or cares whether it's OpenAI, watsonx, or Ollama</span>
+def get_llm() -&gt; BaseChatModel:
+    provider = os.getenv("LLM_PROVIDER", "openai")
+    if provider == "openai":    return ChatOpenAI(model="gpt-4o", ...)
+    if provider == "watsonx":   return ChatWatsonx(model_id="llama-3-3-70b", ...)
+    if provider == "ollama":    return ChatOllama(model="llama3", ...)</pre>
+  </div>
+</div>
+
+<div class="layer-box">
+  <div class="layer-header blue">graph.py — bind tools to the LLM</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="comment"># .bind_tools() sends tool schemas to the LLM so it knows what's available</span>
+<span class="comment"># Returns a new LLM object that includes tool definitions in every request</span>
+llm_with_tools = get_llm().bind_tools(TOOLS)</pre>
+  </div>
+</div>
+
+<div class="layer-box">
+  <div class="layer-header blue">tools/ — @tool decorator</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="comment"># @tool turns a plain Python function into a LangChain Tool object</span>
+<span class="comment"># LangChain reads the docstring + type hints to build the schema</span>
+<span class="comment"># that gets sent to the LLM so it knows how to call this function</span>
+@tool
+def get_pod_status(namespace: str, pod_name: str) -&gt; str:
+    """Get the current status of a Kubernetes pod. Use this when..."""
+    ...</pre>
+  </div>
+</div>
+
+<h3>LangChain message types</h3>
+<p>Every piece of conversation in kubefriend is a LangChain message object:</p>
+<table>
+  <tr><th>Message Type</th><th>Who creates it</th><th>What it contains</th></tr>
+  <tr><td><code>SystemMessage</code></td><td>kubefriend (hardcoded)</td><td>The system prompt — rules the LLM must follow</td></tr>
+  <tr><td><code>HumanMessage</code></td><td>The user</td><td>The question: "Why is my pod failing?"</td></tr>
+  <tr><td><code>AIMessage</code></td><td>The LLM</td><td>Either a tool call request OR the final text answer</td></tr>
+  <tr><td><code>ToolMessage</code></td><td>LangGraph ToolNode</td><td>The result returned by a tool (e.g. pod status output)</td></tr>
+</table>
+
+<div class="callout purple">
+  <strong>In summary:</strong> LangChain is the <em>vocabulary</em> kubefriend uses to talk to LLMs — message types, tool schemas, the BaseChatModel interface. It doesn't run the agent loop. That's LangGraph's job.
+</div>
+
+
+<h2>5. What is LangGraph? — The Agent Orchestration Framework</h2>
+
+<p><strong>LangGraph</strong> is a library built on top of LangChain that lets you define an AI agent as a <em>directed graph of nodes and edges</em>. It handles the loop, the state, and the routing logic.</p>
+
+<h3>Why not just call the LLM in a while loop?</h3>
+<p>You could write this manually:</p>
+
+<pre><span class="comment"># Naive approach — while loop</span>
+messages = [system_prompt, user_message]
+<span class="key">while</span> True:
+    response = llm.invoke(messages)
+    messages.append(response)
+    <span class="key">if</span> response.tool_calls:
+        result = run_tool(response.tool_calls[0])
+        messages.append(ToolMessage(result))
+    <span class="key">else</span>:
+        <span class="key">break</span>  <span class="comment"># done</span></pre>
+
+<p>This works for simple cases, but breaks quickly when you need:</p>
+<ul>
+  <li>Async streaming (yield tokens as they come)</li>
+  <li>Multiple parallel tool calls</li>
+  <li>Checkpointing / resuming a conversation</li>
+  <li>Complex branching (different paths based on state)</li>
+  <li>Observability — seeing which node ran, with what input/output</li>
+</ul>
+
+<p>LangGraph solves all of these by modelling the agent as a <strong>graph</strong> that can be compiled, validated, streamed, and inspected.</p>
+
+<h3>Core concepts</h3>
+
+<table>
+  <tr><th>Concept</th><th>What it is</th><th>In kubefriend</th></tr>
+  <tr><td><strong>State</strong></td><td>A typed dictionary that every node reads from and writes to. Persists across the entire loop.</td><td><code>AgentState</code> — holds the growing list of messages</td></tr>
+  <tr><td><strong>Node</strong></td><td>A Python function that takes State in, returns a partial State update out.</td><td><code>agent_node</code> (LLM thinks) and <code>ToolNode</code> (executes tools)</td></tr>
+  <tr><td><strong>Edge</strong></td><td>A connection from one node to another — defines what runs next.</td><td><code>tools → agent</code> (always loop back after tool call)</td></tr>
+  <tr><td><strong>Conditional Edge</strong></td><td>An edge whose destination is decided by a function at runtime.</td><td><code>agent → tools</code> OR <code>agent → END</code> based on whether LLM made a tool call</td></tr>
+  <tr><td><strong>Reducer</strong></td><td>A function that says how to merge a node's output into State.</td><td><code>add_messages</code> — appends new messages rather than replacing the list</td></tr>
+  <tr><td><strong>Compiled graph</strong></td><td>The result of <code>builder.compile()</code> — a validated, runnable object.</td><td><code>agent_graph</code> — built once at startup, reused for every chat request</td></tr>
+</table>
+
+<h3>How LangGraph validates the graph at compile time</h3>
+<p>When you call <code>builder.compile()</code>, LangGraph checks:</p>
+<ul>
+  <li>Every node that is referenced in an edge actually exists</li>
+  <li>The <code>should_continue</code> function only returns node names that exist (<code>"tools"</code> or <code>"__end__"</code>)</li>
+  <li>There are no cycles that can't be reached</li>
+</ul>
+<p>Errors are caught <em>at startup</em>, not during a live chat — so misconfigured graphs fail fast.</p>
+
+<h3>How LangGraph handles streaming</h3>
+<p><code>agent_graph.astream_events()</code> is an async generator that fires events as the graph executes:</p>
+
+<table>
+  <tr><th>Event name</th><th>When it fires</th><th>kubefriend uses it to</th></tr>
+  <tr><td><code>on_chat_model_stream</code></td><td>Every token the LLM produces</td><td>Stream token to browser via SSE</td></tr>
+  <tr><td><code>on_tool_start</code></td><td>A tool is about to be called</td><td>Show "calling get_pod_status…" in Tool Panel</td></tr>
+  <tr><td><code>on_tool_end</code></td><td>A tool has returned its result</td><td>Show tool result in Tool Panel</td></tr>
+  <tr><td><code>on_chain_end</code> (LangGraph)</td><td>The full graph has finished</td><td>Save full message history for next turn</td></tr>
+</table>
+
+<div class="callout">
+  <strong>In summary:</strong> LangGraph is the <em>engine</em> that drives the agent loop — it decides when to call the LLM, when to call a tool, when to stop, and how to stream events to the outside world. LangChain provides the building blocks (messages, tools, LLM interface) that LangGraph orchestrates.
+</div>
+
+
+<h2>6. The ReAct Flow — How kubefriend Reasons Step by Step</h2>
+
+<p><strong>ReAct = Reasoning + Acting.</strong> It is a prompting pattern where the LLM alternates between <em>thinking about what to do next</em> and <em>taking an action</em> (calling a tool). The result of each action feeds back into the next round of thinking.</p>
+
+<h3>ReAct vs. a simple chatbot</h3>
+<table>
+  <tr><th></th><th>Simple chatbot</th><th>kubefriend (ReAct agent)</th></tr>
+  <tr><td>Knows about your cluster?</td><td>No — answers from training data only</td><td>Yes — calls live Kubernetes APIs</td></tr>
+  <tr><td>Accuracy</td><td>Hallucinated answers</td><td>Grounded in real cluster data</td></tr>
+  <tr><td>Multi-step reasoning</td><td>No — one response</td><td>Yes — loops until it has enough data</td></tr>
+  <tr><td>Can run commands?</td><td>No</td><td>Yes — calls 7 K8s tools</td></tr>
+</table>
+
+<h3>The full ReAct flow for "Why is my demo-crashloop pod failing?"</h3>
+
+<div class="diagram">
+<span class="dim">  User</span>
+  <span class="hi">"Why is my demo-crashloop pod failing in kubefriend-test?"</span>
+    <span class="dim">│</span>
+    <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi">AGENT NODE — Iteration 1</span>                                    <span class="dim">│</span>
+<span class="dim">│</span>                                                              <span class="dim">│</span>
+<span class="dim">│</span>  Input:  SystemMessage (rules) + HumanMessage (question)     <span class="dim">│</span>
+<span class="dim">│</span>  Thinks: "I need to check the pod status first"              <span class="dim">│</span>
+<span class="dim">│</span>  Output: AIMessage(<span class="hi2">tool_calls=[get_pod_status(...)]</span>)          <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│ tool_calls not empty → route to tools</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi3">TOOLS NODE — get_pod_status</span>                                 <span class="dim">│</span>
+<span class="dim">│</span>  Calls Kubernetes API → reads pod object                     <span class="dim">│</span>
+<span class="dim">│</span>  Output: ToolMessage("317 restarts, CrashLoopBackOff, exit=1")<span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│ always loop back to agent</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi">AGENT NODE — Iteration 2</span>                                    <span class="dim">│</span>
+<span class="dim">│</span>                                                              <span class="dim">│</span>
+<span class="dim">│</span>  Input:  all previous messages + tool result                 <span class="dim">│</span>
+<span class="dim">│</span>  Thinks: "exit=1 — I need to see the app logs"               <span class="dim">│</span>
+<span class="dim">│</span>  Output: AIMessage(<span class="hi2">tool_calls=[get_pod_logs(...)]</span>)             <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi3">TOOLS NODE — get_pod_logs</span>                                   <span class="dim">│</span>
+<span class="dim">│</span>  Calls Kubernetes API → reads container logs                 <span class="dim">│</span>
+<span class="dim">│</span>  Output: ToolMessage("starting\n[process exited immediately]")<span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi">AGENT NODE — Iteration 3</span>                                    <span class="dim">│</span>
+<span class="dim">│</span>                                                              <span class="dim">│</span>
+<span class="dim">│</span>  Input:  all previous messages + both tool results           <span class="dim">│</span>
+<span class="dim">│</span>  Thinks: "I should also check events for the full picture"   <span class="dim">│</span>
+<span class="dim">│</span>  Output: AIMessage(<span class="hi2">tool_calls=[get_pod_events(...)]</span>)           <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi3">TOOLS NODE — get_pod_events</span>                                 <span class="dim">│</span>
+<span class="dim">│</span>  Calls Kubernetes API → reads warning events                 <span class="dim">│</span>
+<span class="dim">│</span>  Output: ToolMessage("BackOff x4836, Pulling busybox x346")  <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────┬───────────────────────────┘</span>
+                                   <span class="dim">│</span>
+                                   <span class="dim">▼</span>
+<span class="dim">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="dim">│</span>  <span class="hi">AGENT NODE — Iteration 4</span>                                    <span class="dim">│</span>
+<span class="dim">│</span>                                                              <span class="dim">│</span>
+<span class="dim">│</span>  Input:  all 3 tool results — has enough data now            <span class="dim">│</span>
+<span class="dim">│</span>  Thinks: "I can now write the final answer"                  <span class="dim">│</span>
+<span class="dim">│</span>  Output: AIMessage(<span class="hi">content="**Observation**\n...")             <span class="dim">│</span>
+<span class="dim">│</span>           no tool_calls → <span class="hi">route to END</span>                        <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────────────────────────────┘</span>
+    <span class="dim">│</span>
+    <span class="dim">▼</span>
+<span class="hi">  Streamed to browser token by token via SSE</span>
+  <span class="dim">Observation → Root Cause → Remediation → Prevention</span></span></div>
+
+<h3>What is in AgentState at the end?</h3>
+<p>After the loop completes, the full message history in <code>AgentState</code> looks like this:</p>
+
+<pre>messages = [
+  SystemMessage(<span class="val">"You are kubefriend, a K8s expert..."</span>),
+  HumanMessage(<span class="val">"Why is my demo-crashloop pod failing?"</span>),
+  AIMessage(tool_calls=[{<span class="val">"name"</span>: <span class="val">"get_pod_status"</span>, <span class="val">"args"</span>: {...}}]),
+  ToolMessage(<span class="val">"317 restarts, CrashLoopBackOff, exit=1"</span>),
+  AIMessage(tool_calls=[{<span class="val">"name"</span>: <span class="val">"get_pod_logs"</span>,   <span class="val">"args"</span>: {...}}]),
+  ToolMessage(<span class="val">"starting\n[exited]"</span>),
+  AIMessage(tool_calls=[{<span class="val">"name"</span>: <span class="val">"get_pod_events"</span>, <span class="val">"args"</span>: {...}}]),
+  ToolMessage(<span class="val">"BackOff x4836"</span>),
+  AIMessage(content=<span class="val">"**Observation**\nPod is in CrashLoopBackOff..."</span>),
+]</pre>
+
+<p>This entire list is stored in <code>conversation_store[conversation_id]</code> and sent back to the LLM on the next user question — enabling multi-turn context-aware conversations.</p>
+
+<h3>The routing decision — should_continue()</h3>
+<p>After every agent node, LangGraph calls this function to decide where to go next:</p>
+
+<pre><span class="key">def</span> should_continue(state: AgentState) -&gt; Literal[<span class="val">"tools"</span>, <span class="val">"__end__"</span>]:
+    last_message = state[<span class="val">"messages"</span>][-1]   <span class="comment"># what did the LLM just return?</span>
+
+    <span class="key">if</span> last_message.tool_calls:            <span class="comment"># LLM wants to call a tool</span>
+        <span class="key">return</span> <span class="val">"tools"</span>                    <span class="comment"># → route to ToolNode</span>
+
+    <span class="key">return</span> END                             <span class="comment"># LLM wrote text answer → stop</span></pre>
+
+<div class="callout yellow">
+  <strong>Key insight:</strong> The LLM itself decides when it has enough information to stop. kubefriend doesn't hard-code "call exactly 3 tools". The LLM may call 1 tool for a simple question or 5 tools for a complex one — it stops when it feels confident enough to answer.
+</div>
+
+
+<h2>7. The Agent Reasoning Loop — Code Deep Dive</h2>
+
+<h3>How the three files wire together</h3>
+
+<div class="layer-box">
+  <div class="layer-header purple">state.py — the agent's memory</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="key">class</span> AgentState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
+    <span class="comment">#                                         ↑</span>
+    <span class="comment"># add_messages is a reducer: when a node returns</span>
+    <span class="comment"># {"messages": [new_msg]}, it APPENDS — not replaces</span></pre>
+  </div>
+</div>
+
+<div class="layer-box">
+  <div class="layer-header purple">graph.py — the two nodes and the routing</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="comment"># Node 1 — LLM thinks</span>
+<span class="key">def</span> agent_node(state):
+    messages = state[<span class="val">"messages"</span>]
+    <span class="key">if</span> not isinstance(messages[0], SystemMessage):
+        messages = [SystemMessage(SYSTEM_PROMPT)] + list(messages)
+    response = _get_llm_with_tools().invoke(messages)   <span class="comment"># call LLM</span>
+    <span class="key">return</span> {<span class="val">"messages"</span>: [response]}                    <span class="comment"># append to state</span>
+
+<span class="comment"># Node 2 — tool executor (LangGraph built-in)</span>
+_tools_node = ToolNode(TOOLS)
+<span class="comment"># ToolNode reads tool_calls from last AIMessage,</span>
+<span class="comment"># calls the matching Python function, wraps result in ToolMessage</span>
+
+<span class="comment"># Wire the graph</span>
+builder = StateGraph(AgentState)
+builder.add_node(<span class="val">"agent"</span>, agent_node)
+builder.add_node(<span class="val">"tools"</span>, _tools_node)
+builder.add_edge(START, <span class="val">"agent"</span>)
+builder.add_conditional_edges(<span class="val">"agent"</span>, should_continue)  <span class="comment"># tools or END</span>
+builder.add_edge(<span class="val">"tools"</span>, <span class="val">"agent"</span>)                       <span class="comment"># always loop back</span>
+agent_graph = builder.compile()</pre>
+  </div>
+</div>
+
+<div class="layer-box">
+  <div class="layer-header purple">main.py — streaming the graph to the browser</div>
+  <div class="layer-body">
+<pre style="border:none;background:none;padding:0;margin:0"><span class="key">async for</span> event <span class="key">in</span> agent_graph.astream_events(
+    {<span class="val">"messages"</span>: history + [HumanMessage(user_question)]},
+    version=<span class="val">"v2"</span>,
+):
+    <span class="key">if</span> event[<span class="val">"event"</span>] == <span class="val">"on_chat_model_stream"</span>:
+        yield _sse_event(<span class="val">"token"</span>, chunk.content)   <span class="comment"># → browser</span>
+    <span class="key">elif</span> event[<span class="val">"event"</span>] == <span class="val">"on_tool_start"</span>:
+        yield _sse_event(<span class="val">"tool_call"</span>, ...)          <span class="comment"># → Tool Panel</span>
+    <span class="key">elif</span> event[<span class="val">"event"</span>] == <span class="val">"on_tool_end"</span>:
+        yield _sse_event(<span class="val">"tool_result"</span>, ...)        <span class="comment"># → Tool Panel</span></pre>
+  </div>
+</div>
+
+
+<h2>8. The 7 Kubernetes Tools</h2>
+
+<p>Each tool is a Python function decorated with <code>@tool</code>. LangChain reads the <strong>docstring</strong> to build the description the LLM uses to decide when and how to call it.</p>
+
+<table>
+  <tr><th>Tool</th><th>What it fetches</th><th>When the agent uses it</th></tr>
+  <tr><td><code>get_pod_status</code></td><td>Phase, container states, restart count, last termination reason (OOMKilled, Error), pod conditions</td><td>First tool called — establishes the baseline state</td></tr>
+  <tr><td><code>get_pod_logs</code></td><td>Last N lines of container stdout/stderr (default 100)</td><td>After seeing CrashLoopBackOff — logs reveal the application error</td></tr>
+  <tr><td><code>get_pod_events</code></td><td>Kubernetes events: scheduling failures, image pull errors, BackOff warnings</td><td>When pod is Pending or status is unclear</td></tr>
+  <tr><td><code>get_deployment</code></td><td>Replica counts (desired/ready/available), rollout conditions, image versions, strategy</td><td>When the problem may be at deployment level</td></tr>
+  <tr><td><code>get_pvc</code></td><td>PVC names, status (Bound/Pending/Lost), capacity, storage class</td><td>When a pod is stuck Pending — may be waiting for a PVC</td></tr>
+  <tr><td><code>find_unused_pods</code></td><td>Evicted, Succeeded, Failed, Unknown pods</td><td>Cleanup queries: "what pods are safe to delete?"</td></tr>
+  <tr><td><code>get_crd_resources</code></td><td>Any Custom Resource Definition — auto-discovers group/version</td><td>IBM watsonx workloads, OpenSearch, Milvus, Presto, or any CRD</td></tr>
+</table>
+
+
+<h2>9. LLM Integration — OpenAI · watsonx · Ollama</h2>
+
+<p>All three providers are behind a single factory function. The rest of the codebase never imports OpenAI or watsonx directly — it only calls <code>get_llm()</code> and gets back a standard <code>BaseChatModel</code>.</p>
+
+<table>
+  <tr><th></th><th>OpenAI GPT-4o</th><th>IBM watsonx (LLaMA 3.3 70B)</th><th>Ollama (local)</th></tr>
+  <tr><td>Where it runs</td><td>OpenAI cloud</td><td>IBM Cloud (WML)</td><td>Your machine</td></tr>
+  <tr><td>Cost</td><td>Pay per token</td><td>IBM Cloud credits</td><td>Free / offline</td></tr>
+  <tr><td>Data privacy</td><td>Leaves machine</td><td>Leaves machine</td><td>Never leaves machine</td></tr>
+  <tr><td>Tool calling</td><td>✅ Excellent</td><td>✅ Strong (LLaMA 3.3)</td><td>✅ Good (llama3.2, qwen2.5)</td></tr>
+  <tr><td>Switch command</td><td><code>./kubefriend llm openai</code></td><td><code>./kubefriend llm watsonx</code></td><td><code>./kubefriend llm ollama</code></td></tr>
+</table>
+
+
+<h2>10. How watsonx Was Debugged &amp; Made to Work</h2>
+
+<h3>The error</h3>
+<pre>403 project_id 4be90509-... is not associated with a WML instance</pre>
+
+<h3>Root cause</h3>
+<p>The watsonx project existed in IBM Cloud, but had no <strong>Watson Machine Learning (WML) service instance</strong> associated with it.</p>
+
+<h3>Fix</h3>
+<ol>
+  <li>Open <strong>dataplatform.cloud.ibm.com</strong> → select the project</li>
+  <li>Go to <strong>Manage → Services &amp; integrations → Associate service</strong></li>
+  <li>Select or create a Watson Machine Learning instance</li>
+</ol>
+
+<h3>Model selection</h3>
+<p>The configured model (<code>ibm/granite-3-8b-instruct</code>) was not available on this WML instance. We listed all 17 available models and picked <code>meta-llama/llama-3-3-70b-instruct</code> — full tool-calling support, best reasoning quality in the list.</p>
+
+<h3>Resilience fix</h3>
+<p>LLM initialisation was moved from <strong>module import time</strong> to <strong>first chat request</strong> (lazy init). Now the server starts and serves health checks and the dashboard even if LLM credentials are temporarily broken.</p>
+
+
+<h2>11. The Frontend — Chat &amp; Live Dashboard</h2>
+
+<h3>Chat Tab</h3>
+<ul>
+  <li>Text input → POST to <code>/api/chat</code> → SSE stream</li>
+  <li>SSE events: <code>token</code>, <code>tool_call</code>, <code>tool_result</code>, <code>done</code>, <code>error</code></li>
+  <li><strong>Tool Call Panel</strong> — shows every tool call and its raw result in real time</li>
+  <li>Multi-turn conversation — history stored per <code>conversation_id</code></li>
+</ul>
+
+<h3>Dashboard Tab</h3>
+<ul>
+  <li>Polls <code>GET /api/dashboard?namespace=X</code> every 30 seconds</li>
+  <li>Summary bar: Total / Running / Warning / Critical pod counts</li>
+  <li>Pod table with AI diagnosis and "Ask AI" one-click button</li>
+</ul>
+
+
+<h2>12. Multi-Cluster Support</h2>
+
+<pre><span class="comment"># List all available clusters</span>
+./kubefriend contexts
+
+<span class="comment"># Switch — backend restarts automatically and re-reads ~/.kube/config</span>
+./kubefriend switch rancher-desktop
+./kubefriend switch lh-wxd-dev-us-south-db-roks24-oc</pre>
+
+<div class="callout">
+  <strong>ROKS / OpenShift:</strong> <code>oc login</code> tunnels the cluster API to <code>localhost:PORT</code> on your Mac. The native backend (same network namespace) can reach this directly. Docker containers cannot — see architecture section.
+</div>
+
+
+<h2>13. Project Structure</h2>
+
+<pre>kubefriend/
+<span class="comment">├── backend/
+│   ├── app/
+│   │   ├── agent/
+│   │   │   ├── graph.py      LangGraph ReAct graph — nodes, edges, routing
+│   │   │   ├── prompts.py    System prompt — rules the LLM must follow
+│   │   │   └── state.py      AgentState — Annotated[list[BaseMessage], add_messages]
+│   │   ├── llm/
+│   │   │   └── factory.py    get_llm() — builds OpenAI / watsonx / Ollama
+│   │   ├── tools/
+│   │   │   ├── registry.py   TOOLS list — single source of truth
+│   │   │   ├── k8s_client.py Loads kubeconfig, exposes core_v1() / apps_v1()
+│   │   │   ├── pod_status.py
+│   │   │   ├── pod_logs.py
+│   │   │   ├── pod_events.py
+│   │   │   ├── deployment.py
+│   │   │   ├── pvc.py
+│   │   │   ├── unused_pods.py
+│   │   │   └── crd_resource.py  Generic CRD — auto-discovers group/version
+│   │   ├── main.py           FastAPI — /api/chat (SSE), /api/dashboard, /healthz
+│   │   ├── dashboard.py      Pod health scanner with concurrent AI diagnosis
+│   │   └── schemas.py        Pydantic models
+│   └── pyproject.toml        uv deps
+├── frontend/src/
+│   ├── App.tsx               Chat + Dashboard tabs
+│   ├── components/           Dashboard, PodTable, SummaryBar, NamespaceSelector
+│   └── hooks/                useChat (SSE), useDashboard (polling)
+├── kubefriend                CLI: start / stop / switch / llm / contexts / logs
+├── install.sh                One-shot setup
+└── .env                      LLM_PROVIDER, API keys, KUBECONFIG_PATH</span></pre>
+
+
+<h2>14. Running &amp; Operating kubefriend</h2>
+
+<h3>First-time setup</h3>
+<pre>git clone https://github.com/sijics/kube-friend
+cd kube-friend
+./install.sh
+cp .env.example .env    <span class="comment"># fill in your API keys</span></pre>
+
+<h3>Start / stop</h3>
+<pre>./kubefriend start      <span class="comment"># backend :8000, frontend :5173</span>
+./kubefriend stop
+./kubefriend restart
+./kubefriend status     <span class="comment"># PIDs, cluster, LLM provider</span>
+./kubefriend logs       <span class="comment"># tail backend log</span></pre>
+
+<h3>Key API endpoints</h3>
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+  <tr><td><code>/healthz</code></td><td>GET</td><td>Health check — returns status + active LLM provider</td></tr>
+  <tr><td><code>/api/chat</code></td><td>POST</td><td>Main chat — streams SSE</td></tr>
+  <tr><td><code>/api/dashboard</code></td><td>GET</td><td>Pod health scan for a namespace</td></tr>
+  <tr><td><code>/api/llm</code></td><td>GET</td><td>Return current LLM provider</td></tr>
+  <tr><td><code>/api/llm/reset</code></td><td>POST</td><td>Hot-swap provider: <code>?provider=openai|watsonx|ollama</code></td></tr>
+</table>
+
+
+<h2>15. End-to-End Walkthrough: "Why is my pod crashing?"</h2>
+
+<div class="callout green">
+  <strong>User question:</strong> "Why is my demo-crashloop pod failing in the kubefriend-test namespace?"<br />
+  <strong>LLM:</strong> IBM watsonx — meta-llama/llama-3-3-70b-instruct<br />
+  <strong>Total time:</strong> ~12 seconds · 3 tool calls · 0 manual kubectl commands
+</div>
+
+<table>
+  <tr><th>Step</th><th>What happened</th><th>Data returned</th></tr>
+  <tr><td>Tool call 1</td><td><code>get_pod_status</code></td><td>317 restarts, CrashLoopBackOff, exit=1</td></tr>
+  <tr><td>Tool call 2</td><td><code>get_pod_logs</code></td><td>Container printed "starting" then immediately exited</td></tr>
+  <tr><td>Tool call 3</td><td><code>get_pod_events</code></td><td>BackOff event fired 4836 times</td></tr>
+  <tr><td>Final answer</td><td>Streamed to browser</td><td>Observation → Root Cause → Remediation → Prevention</td></tr>
+</table>
+
+
+<h2>16. Extending kubefriend — Roadmap</h2>
+
+<table>
+  <tr><th>Planned Tool</th><th>What it enables</th><th>Status</th></tr>
+  <tr><td>GitHub integration</td><td>"What changed in the last deploy?"</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>ArgoCD</td><td>"Is my ArgoCD sync healthy?"</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Helm</td><td>"What version of chart X is deployed?"</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Node pressure</td><td>"Which node is under memory pressure?"</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>IBM Cloud APIs</td><td>Resource group status, CIS, Object Storage health</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Conversation persistence</td><td>Survive server restarts — LangGraph checkpointer + SQLite</td><td><span class="badge badge-grey">Planned</span></td></tr>
+  <tr><td>Slack / Teams integration</td><td>Ask kubefriend from chat — webhook receiver</td><td><span class="badge badge-grey">Future</span></td></tr>
+</table>
+
+<div class="callout purple">
+  <strong>Adding any new tool takes ~15 minutes:</strong> create <code>tools/my_tool.py</code>, write a clear docstring (this is what the LLM reads), add to <code>registry.py</code>, restart. The agent learns to use it automatically.
+</div>
+
+<div class="footer">Made with IBM Bob</div>
+
+</div>
+</body>
+</html>

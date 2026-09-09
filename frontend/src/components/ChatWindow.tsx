@@ -53,7 +53,7 @@ export function ChatWindow({ messages }: Props) {
             Ask me anything about your Kubernetes cluster.
           </div>
           <div style={{ fontSize: '13px', marginTop: '8px', color: '#8c959f' }}>
-            e.g. "Why is my openrag-backend pod failing?"
+            e.g. "Why is my payment-service pod crashing?"
           </div>
         </div>
       )}
