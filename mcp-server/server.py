@@ -26,8 +26,19 @@ from datetime import datetime, timezone
 # ── Kubernetes client setup ───────────────────────────────────────────────────
 
 def _load_k8s():
-    """Load kubeconfig once. Returns (core_v1_api, apps_v1_api, custom_objects_api)."""
+    """
+    Load kubeconfig and return fresh API clients.
+
+    Called on EVERY tool invocation — not once at startup — so that switching
+    kubectl context (via ./kubefriend switch or kubectl config use-context)
+    is picked up immediately without restarting the MCP server process.
+    """
     from kubernetes import client, config
+
+    # Reset the default configuration so the previous context doesn't linger.
+    # Without this, load_kube_config() on a second call would merge on top of
+    # the old singleton and the active context change would be ignored.
+    client.Configuration._default = None  # type: ignore[attr-defined]
 
     try:
         config.load_incluster_config()
@@ -474,7 +485,7 @@ TOOLS = [
 ]
 
 
-def handle_request(req: dict, core_v1, apps_v1, custom_api) -> dict:
+def handle_request(req: dict) -> dict:
     """Route a JSON-RPC request to the right handler and return a response dict."""
     req_id = req.get("id")
     method = req.get("method", "")
@@ -499,7 +510,15 @@ def handle_request(req: dict, core_v1, apps_v1, custom_api) -> dict:
     if method == "tools/call":
         tool_name = params.get("name", "")
         args = params.get("arguments", {})
-        print(f"[kubefriend-mcp] calling {tool_name} args={args}", file=sys.stderr)
+        print(f"[kubefriend-mcp] calling {tool_name} context={_active_context()} args={args}", file=sys.stderr)
+
+        # Re-read kubeconfig on every tool call so kubectl context switches
+        # (./kubefriend switch / kubectl config use-context) are picked up
+        # immediately without restarting the MCP server process.
+        try:
+            core_v1, apps_v1, custom_api = _load_k8s()
+        except Exception as e:
+            return ok({"content": [{"type": "text", "text": f"kubeconfig error: {e}"}], "isError": True})
 
         try:
             if tool_name == "get_pod_status":
@@ -547,14 +566,26 @@ def handle_request(req: dict, core_v1, apps_v1, custom_api) -> dict:
     return err(-32601, f"Method not found: {method}")
 
 
-def main():
-    print("[kubefriend-mcp] starting, loading kubeconfig...", file=sys.stderr)
+def _active_context() -> str:
+    """Return the currently active kubectl context name for log messages."""
     try:
-        core_v1, apps_v1, custom_api = _load_k8s()
-        print("[kubefriend-mcp] connected to cluster", file=sys.stderr)
+        from kubernetes import config as k8s_config
+        contexts, active = k8s_config.list_kube_config_contexts()
+        return active.get("name", "unknown") if active else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def main():
+    print("[kubefriend-mcp] starting — context will be read on each tool call", file=sys.stderr)
+
+    # Validate kubeconfig is readable at startup so the error is visible early.
+    try:
+        _load_k8s()
+        print(f"[kubefriend-mcp] kubeconfig OK, active context: {_active_context()}", file=sys.stderr)
     except Exception as e:
-        print(f"[kubefriend-mcp] ERROR loading kubeconfig: {e}", file=sys.stderr)
-        sys.exit(1)
+        print(f"[kubefriend-mcp] WARNING: kubeconfig error at startup: {e}", file=sys.stderr)
+        print("[kubefriend-mcp] tool calls will fail until kubeconfig is fixed", file=sys.stderr)
 
     print("[kubefriend-mcp] ready, listening on stdio", file=sys.stderr)
 
@@ -570,7 +601,7 @@ def main():
             print(json.dumps(resp), flush=True)
             continue
 
-        resp = handle_request(req, core_v1, apps_v1, custom_api)
+        resp = handle_request(req)
         if resp is not None:  # None = notification, no response
             print(json.dumps(resp), flush=True)
 
