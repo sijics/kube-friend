@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-kubefriend MCP server — exposes all 7 Kubernetes tools to Bob via STDIO.
+kubefriend MCP server — exposes all 8 Kubernetes tools to Bob via STDIO.
 
 Bob spawns this as a child process. Communication is JSON-RPC 2.0 over
 stdin/stdout. All logging goes to stderr so it never corrupts the protocol.
@@ -364,129 +364,197 @@ def _get_crd_resources(custom_api, namespace: str = "", resource_type: str = "wo
     return "\n".join(lines)
 
 
-def _find_orphaned_openrag_pvcs(core_v1, custom_api, namespace: str = "") -> str:
-    import re as _re
-    from kubernetes import client as k8s_client
+# CSI driver used for NFS PVs (Type A)
+_NFS_DRIVER = "vpc.file.csi.ibm.io"
+# Claim name suffixes that identify OSS operator PVs (Type B)
+_OSS_CLAIM_SUFFIXES = ("openrag-lf-data", "openrag-be-data", "openrag-data")
+# Name pattern for infra-openrag-operator NFS PVs (Type A)
+_NFS_PV_RE = re.compile(r"^c-(.+)-pv$")
 
-    _UUID_RE = _re.compile(
-        r"^(?:c-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-",
-        _re.IGNORECASE,
-    )
 
-    def is_openrag_pvc(pvc) -> bool:
-        labels = pvc.metadata.labels or {}
-        name = pvc.metadata.name.lower()
-        return (labels.get("type", "").lower() == "openrag"
-                or str(labels.get("service_id", "")).lower().startswith("openrag")
-                or "workload_id" in labels
-                or any(kw in name for kw in ("openrag", "langflow", "backend")))
-
-    def workload_exists(ns, wid) -> bool:
-        try:
-            custom_api.get_namespaced_custom_object(
-                group="wxd.ibm.com", version="v1",
-                namespace=ns, plural="workloads", name=wid)
-            return True
-        except Exception:
-            return False
-
-    def openrag_cr_exists(ns, cr_name) -> bool:
-        try:
-            ext = k8s_client.ApiextensionsV1Api()
-            for crd in ext.list_custom_resource_definition().items:
-                if crd.spec.names.singular == "openrag" or crd.spec.names.plural in ("openrags", "openrag"):
-                    grp = crd.spec.group
-                    ver = next((v.name for v in crd.spec.versions if v.served), crd.spec.versions[0].name)
-                    custom_api.get_namespaced_custom_object(
-                        group=grp, version=ver,
-                        namespace=ns, plural=crd.spec.names.plural, name=cr_name)
-                    return True
-        except Exception:
-            pass
-        return False
-
+def _namespace_is_active(custom_api, namespace: str) -> bool:
+    """Return True if namespace still has a live OpenRAG CR or Workload CR."""
     try:
-        if namespace:
-            all_pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace).items
-        else:
-            all_pvcs = core_v1.list_persistent_volume_claim_for_all_namespaces().items
+        result = custom_api.list_namespaced_custom_object(
+            group="wxd.ibm.com", version="v1",
+            namespace=namespace, plural="workloads",
+        )
+        if result.get("items"):
+            return True
+    except Exception:
+        pass
+    try:
+        from kubernetes import client as k8s_client
+        ext = k8s_client.ApiextensionsV1Api()
+        for crd in ext.list_custom_resource_definition().items:
+            names = crd.spec.names
+            if names.singular == "openrag" or names.plural in ("openrags",):
+                grp = crd.spec.group
+                ver = next((v.name for v in crd.spec.versions if v.served),
+                           crd.spec.versions[0].name)
+                result = custom_api.list_namespaced_custom_object(
+                    group=grp, version=ver, namespace=namespace, plural=names.plural)
+                if result.get("items"):
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def _find_orphaned_openrag_pvs(core_v1, custom_api, dry_run: bool = True) -> str:
+    """
+    PV-level orphan scanner. Covers:
+      TYPE A — NFS PVs (name: c-<workload-id>-pv, driver: vpc.file.csi.ibm.io)
+      TYPE B — Block PVs (claim names: openrag-lf-data / openrag-be-data / openrag-data)
+    A PV is orphaned when phase is Released/Failed OR its claim namespace has no
+    live OpenRAG CR and no live Workload CR.
+    """
+    try:
+        all_pvs = core_v1.list_persistent_volume().items
     except Exception as e:
-        return f"Error listing PVCs: {e}"
+        return f"Error listing PersistentVolumes: {e}"
 
-    candidates = [p for p in all_pvcs if is_openrag_pvc(p)]
-    if not candidates:
-        scope = f"namespace '{namespace}'" if namespace else "all namespaces"
-        return f"No OpenRAG PVCs found in {scope}."
-
-    orphaned, active, unknown = [], [], []
-
-    for pvc in candidates:
-        ns    = pvc.metadata.namespace
-        name  = pvc.metadata.name
-        labels = pvc.metadata.labels or {}
-        phase = pvc.status.phase or "Unknown"
-        capacity = "?"
-        if pvc.spec.resources and pvc.spec.resources.requests:
-            capacity = pvc.spec.resources.requests.get("storage", "?")
-
-        wid = labels.get("workload_id", "")
-        if not wid:
-            m = _UUID_RE.match(name)
-            wid = m.group(1) if m else ""
-
-        entry = {"namespace": ns, "pvc_name": name,
-                 "workload_id": wid or "N/A", "phase": phase, "capacity": capacity}
-
-        if wid:
-            if workload_exists(ns, wid):
-                entry["reason"] = "Workload CR exists"
-                active.append(entry)
-            elif openrag_cr_exists(ns, wid):
-                entry["reason"] = "OpenRAG CR exists"
-                active.append(entry)
-            else:
-                entry["reason"] = f"No Workload or OpenRAG CR found for ID {wid}"
-                entry["delete_cmd"] = f"kubectl delete pvc {name} -n {ns}"
-                orphaned.append(entry)
-        else:
-            wl_count = 0
-            try:
-                wl_result = custom_api.list_namespaced_custom_object(
-                    group="wxd.ibm.com", version="v1", namespace=ns, plural="workloads")
-                wl_count = len(wl_result.get("items", []))
-            except Exception:
-                pass
-            if wl_count == 0:
-                entry["reason"] = "No workload_id label and no Workload CRs in namespace"
-                entry["delete_cmd"] = f"kubectl delete pvc {name} -n {ns}"
-                orphaned.append(entry)
-            else:
-                entry["reason"] = "Cannot determine owner (no workload_id label)"
-                unknown.append(entry)
+    orphans = []
+    ok_pvs  = []
+    total_a = 0
+    total_b = 0
 
     lines = [
-        f"OpenRAG PVC scan — {len(candidates)} PVC(s): "
-        f"{len(orphaned)} orphaned · {len(active)} active · {len(unknown)} unknown\n"
+        "=== OpenRAG Orphaned PV Scanner ===",
+        f"dry_run={dry_run}",
+        "",
     ]
-    if orphaned:
-        lines.append("── ORPHANED (safe to delete) ─────────────────────────")
-        for p in orphaned:
-            lines += [f"✗ {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
-                      f"  Workload ID: {p['workload_id']}", f"  Phase      : {p['phase']}",
-                      f"  Capacity   : {p['capacity']}", f"  Reason     : {p['reason']}",
-                      f"  Delete     : {p['delete_cmd']}", ""]
-    if unknown:
-        lines.append("── UNKNOWN ownership (review manually) ───────────────")
-        for p in unknown:
-            lines += [f"? {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
-                      f"  Phase      : {p['phase']}", f"  Reason     : {p['reason']}", ""]
-    if active:
-        lines.append("── ACTIVE (workload exists) ──────────────────────────")
-        for p in active:
-            lines += [f"✓ {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
-                      f"  Workload ID: {p['workload_id']}", f"  Phase      : {p['phase']}", ""]
-    if orphaned:
-        lines.append(f"WARNING: {len(orphaned)} orphaned PVC(s). Review and delete with commands above.")
+
+    # ── TYPE A — NFS PVs ─────────────────────────────────────────────────────
+    lines.append("--- TYPE A: NFS PVs (infra-openrag-operator) ---")
+    type_a_pvs = [
+        pv for pv in all_pvs
+        if _NFS_PV_RE.match(pv.metadata.name)
+        and pv.spec.csi
+        and pv.spec.csi.driver == _NFS_DRIVER
+    ]
+
+    if not type_a_pvs:
+        lines.append("  None found.")
+    else:
+        for pv in type_a_pvs:
+            total_a += 1
+            pv_name  = pv.metadata.name
+            labels   = pv.metadata.labels or {}
+            phase    = pv.status.phase or "Unknown"
+            reclaim  = pv.spec.persistent_volume_reclaim_policy or "Unknown"
+            capacity = pv.spec.capacity.get("storage", "?") if pv.spec.capacity else "?"
+            m = _NFS_PV_RE.match(pv_name)
+            workload_id = m.group(1) if m else ""
+            tenant_ns   = labels.get("tenant", workload_id)
+
+            reason = ""
+            if phase in ("Released", "Failed"):
+                reason = f"phase={phase}"
+            elif tenant_ns and not _namespace_is_active(custom_api, tenant_ns):
+                reason = f"no OpenRAG/Workload CR in ns {tenant_ns}"
+
+            entry = {"type": "A", "name": pv_name, "workload_id": workload_id,
+                     "namespace": tenant_ns, "phase": phase, "reclaim": reclaim,
+                     "capacity": capacity, "reason": reason}
+            if reason:
+                orphans.append(entry)
+                lines.append(
+                    f"  [ORPHAN] {pv_name}\n"
+                    f"    phase={phase}  reclaim={reclaim}  capacity={capacity}\n"
+                    f"    workload={workload_id}  ns={tenant_ns}\n"
+                    f"    reason={reason}\n"
+                    f"    delete: kubectl delete pv {pv_name}"
+                )
+            else:
+                ok_pvs.append(entry)
+                lines.append(f"  [OK]     {pv_name}  phase={phase}  ns={tenant_ns}")
+
+    lines.append("")
+
+    # ── TYPE B — Block PVs ───────────────────────────────────────────────────
+    lines.append("--- TYPE B: Block PVs (OSS operator Helm chart) ---")
+    type_b_pvs = [
+        pv for pv in all_pvs
+        if pv.spec.claim_ref
+        and pv.spec.claim_ref.name
+        and any(pv.spec.claim_ref.name.endswith(s) for s in _OSS_CLAIM_SUFFIXES)
+    ]
+
+    if not type_b_pvs:
+        lines.append("  None found.")
+    else:
+        for pv in type_b_pvs:
+            total_b += 1
+            pv_name    = pv.metadata.name
+            claim_ns   = pv.spec.claim_ref.namespace or ""
+            claim_name = pv.spec.claim_ref.name or ""
+            phase      = pv.status.phase or "Unknown"
+            reclaim    = pv.spec.persistent_volume_reclaim_policy or "Unknown"
+            sc         = pv.spec.storage_class_name or ""
+            capacity   = pv.spec.capacity.get("storage", "?") if pv.spec.capacity else "?"
+
+            reason = ""
+            if phase in ("Released", "Failed"):
+                reason = f"phase={phase}"
+            elif claim_ns and not _namespace_is_active(custom_api, claim_ns):
+                reason = f"no OpenRAG/Workload CR in ns {claim_ns}"
+
+            entry = {"type": "B", "name": pv_name, "workload_id": claim_ns,
+                     "namespace": claim_ns, "claim": claim_name,
+                     "phase": phase, "reclaim": reclaim,
+                     "storage_class": sc, "capacity": capacity, "reason": reason}
+            if reason:
+                orphans.append(entry)
+                lines.append(
+                    f"  [ORPHAN] {pv_name}\n"
+                    f"    phase={phase}  reclaim={reclaim}  sc={sc}  capacity={capacity}\n"
+                    f"    claim={claim_ns}/{claim_name}\n"
+                    f"    reason={reason}\n"
+                    f"    delete: kubectl delete pv {pv_name}"
+                )
+            else:
+                ok_pvs.append(entry)
+                lines.append(f"  [OK]     {pv_name}  phase={phase}  claim={claim_ns}/{claim_name}")
+
+    lines.append("")
+    total = total_a + total_b
+    lines.append("═" * 64)
+    lines.append(
+        f"Summary: {len(orphans)} orphaned PV(s) out of {total} total OpenRAG PV(s) "
+        f"(Type A: {total_a}, Type B: {total_b})."
+    )
+
+    if not orphans:
+        lines.append("No orphaned PVs found.")
+        return "\n".join(lines)
+
+    lines.append("")
+    lines.append("Orphaned PVs:")
+    for o in orphans:
+        lines.append(f"  - {o['name']}  ({o['reason']})")
+
+    if not dry_run:
+        lines.append("")
+        lines.append("dry_run=False — deleting orphaned PVs...")
+        deleted, errors = [], []
+        for o in orphans:
+            try:
+                core_v1.delete_persistent_volume(name=o["name"])
+                deleted.append(o["name"])
+                lines.append(f"  ✓ Deleted {o['name']}")
+            except Exception as e:
+                errors.append(o["name"])
+                lines.append(f"  ✗ Failed to delete {o['name']}: {e}")
+        lines.append(
+            f"\nDeleted {len(deleted)} PV(s)."
+            + (f" {len(errors)} error(s)." if errors else "")
+        )
+    else:
+        lines.append("")
+        lines.append("dry_run=True — no PVs were deleted.")
+        lines.append("To delete, call this tool again with dry_run=False.")
+
     return "\n".join(lines)
 
 
@@ -609,18 +677,24 @@ TOOLS = [
         },
     },
     {
-        "name": "find_orphaned_openrag_pvcs",
+        "name": "find_orphaned_openrag_pvs",
         "description": (
-            "Find orphaned OpenRAG PVCs — PVCs that belong to an OpenRAG workload "
-            "whose parent Workload CR or OpenRAG CR no longer exists. "
-            "Use for storage cleanup after OpenRAG workloads are deleted."
+            "Find orphaned OpenRAG PersistentVolumes (PV-level scan, cluster-wide). "
+            "Covers Type A NFS PVs (c-<workload-id>-pv, vpc.file.csi.ibm.io) and "
+            "Type B block PVs (claim names: openrag-lf-data, openrag-be-data, openrag-data). "
+            "A PV is orphaned when phase=Released/Failed OR its claim namespace has no live "
+            "OpenRAG or Workload CR. Use for storage cleanup after OpenRAG workloads are deleted."
         ),
         "inputSchema": {
             "type": "object",
             "properties": {
-                "namespace": {
-                    "type": "string",
-                    "description": "Namespace to scan. Leave empty to scan ALL namespaces (recommended).",
+                "dry_run": {
+                    "type": "boolean",
+                    "description": (
+                        "When true (default), only lists orphaned PVs — no deletions. "
+                        "When false, deletes every identified orphan. "
+                        "Always review with dry_run=true before setting false."
+                    ),
                 },
             },
             "required": [],
@@ -693,10 +767,10 @@ def handle_request(req: dict) -> dict:
                     args.get("filter_state", ""),
                     args.get("name", ""),
                 )
-            elif tool_name == "find_orphaned_openrag_pvcs":
-                text = _find_orphaned_openrag_pvcs(
+            elif tool_name == "find_orphaned_openrag_pvs":
+                text = _find_orphaned_openrag_pvs(
                     core_v1, custom_api,
-                    args.get("namespace", ""),
+                    bool(args.get("dry_run", True)),
                 )
             else:
                 return err(-32601, f"Unknown tool: {tool_name}")
