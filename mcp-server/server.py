@@ -364,6 +364,132 @@ def _get_crd_resources(custom_api, namespace: str = "", resource_type: str = "wo
     return "\n".join(lines)
 
 
+def _find_orphaned_openrag_pvcs(core_v1, custom_api, namespace: str = "") -> str:
+    import re as _re
+    from kubernetes import client as k8s_client
+
+    _UUID_RE = _re.compile(
+        r"^(?:c-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-",
+        _re.IGNORECASE,
+    )
+
+    def is_openrag_pvc(pvc) -> bool:
+        labels = pvc.metadata.labels or {}
+        name = pvc.metadata.name.lower()
+        return (labels.get("type", "").lower() == "openrag"
+                or str(labels.get("service_id", "")).lower().startswith("openrag")
+                or "workload_id" in labels
+                or any(kw in name for kw in ("openrag", "langflow", "backend")))
+
+    def workload_exists(ns, wid) -> bool:
+        try:
+            custom_api.get_namespaced_custom_object(
+                group="wxd.ibm.com", version="v1",
+                namespace=ns, plural="workloads", name=wid)
+            return True
+        except Exception:
+            return False
+
+    def openrag_cr_exists(ns, cr_name) -> bool:
+        try:
+            ext = k8s_client.ApiextensionsV1Api()
+            for crd in ext.list_custom_resource_definition().items:
+                if crd.spec.names.singular == "openrag" or crd.spec.names.plural in ("openrags", "openrag"):
+                    grp = crd.spec.group
+                    ver = next((v.name for v in crd.spec.versions if v.served), crd.spec.versions[0].name)
+                    custom_api.get_namespaced_custom_object(
+                        group=grp, version=ver,
+                        namespace=ns, plural=crd.spec.names.plural, name=cr_name)
+                    return True
+        except Exception:
+            pass
+        return False
+
+    try:
+        if namespace:
+            all_pvcs = core_v1.list_namespaced_persistent_volume_claim(namespace=namespace).items
+        else:
+            all_pvcs = core_v1.list_persistent_volume_claim_for_all_namespaces().items
+    except Exception as e:
+        return f"Error listing PVCs: {e}"
+
+    candidates = [p for p in all_pvcs if is_openrag_pvc(p)]
+    if not candidates:
+        scope = f"namespace '{namespace}'" if namespace else "all namespaces"
+        return f"No OpenRAG PVCs found in {scope}."
+
+    orphaned, active, unknown = [], [], []
+
+    for pvc in candidates:
+        ns    = pvc.metadata.namespace
+        name  = pvc.metadata.name
+        labels = pvc.metadata.labels or {}
+        phase = pvc.status.phase or "Unknown"
+        capacity = "?"
+        if pvc.spec.resources and pvc.spec.resources.requests:
+            capacity = pvc.spec.resources.requests.get("storage", "?")
+
+        wid = labels.get("workload_id", "")
+        if not wid:
+            m = _UUID_RE.match(name)
+            wid = m.group(1) if m else ""
+
+        entry = {"namespace": ns, "pvc_name": name,
+                 "workload_id": wid or "N/A", "phase": phase, "capacity": capacity}
+
+        if wid:
+            if workload_exists(ns, wid):
+                entry["reason"] = "Workload CR exists"
+                active.append(entry)
+            elif openrag_cr_exists(ns, wid):
+                entry["reason"] = "OpenRAG CR exists"
+                active.append(entry)
+            else:
+                entry["reason"] = f"No Workload or OpenRAG CR found for ID {wid}"
+                entry["delete_cmd"] = f"kubectl delete pvc {name} -n {ns}"
+                orphaned.append(entry)
+        else:
+            wl_count = 0
+            try:
+                wl_result = custom_api.list_namespaced_custom_object(
+                    group="wxd.ibm.com", version="v1", namespace=ns, plural="workloads")
+                wl_count = len(wl_result.get("items", []))
+            except Exception:
+                pass
+            if wl_count == 0:
+                entry["reason"] = "No workload_id label and no Workload CRs in namespace"
+                entry["delete_cmd"] = f"kubectl delete pvc {name} -n {ns}"
+                orphaned.append(entry)
+            else:
+                entry["reason"] = "Cannot determine owner (no workload_id label)"
+                unknown.append(entry)
+
+    lines = [
+        f"OpenRAG PVC scan — {len(candidates)} PVC(s): "
+        f"{len(orphaned)} orphaned · {len(active)} active · {len(unknown)} unknown\n"
+    ]
+    if orphaned:
+        lines.append("── ORPHANED (safe to delete) ─────────────────────────")
+        for p in orphaned:
+            lines += [f"✗ {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
+                      f"  Workload ID: {p['workload_id']}", f"  Phase      : {p['phase']}",
+                      f"  Capacity   : {p['capacity']}", f"  Reason     : {p['reason']}",
+                      f"  Delete     : {p['delete_cmd']}", ""]
+    if unknown:
+        lines.append("── UNKNOWN ownership (review manually) ───────────────")
+        for p in unknown:
+            lines += [f"? {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
+                      f"  Phase      : {p['phase']}", f"  Reason     : {p['reason']}", ""]
+    if active:
+        lines.append("── ACTIVE (workload exists) ──────────────────────────")
+        for p in active:
+            lines += [f"✓ {p['pvc_name']}", f"  Namespace  : {p['namespace']}",
+                      f"  Workload ID: {p['workload_id']}", f"  Phase      : {p['phase']}", ""]
+    if orphaned:
+        lines.append(f"WARNING: {len(orphaned)} orphaned PVC(s). Review and delete with commands above.")
+    return "\n".join(lines)
+
+
 # ── MCP server — JSON-RPC 2.0 over STDIO ─────────────────────────────────────
 
 TOOLS = [
@@ -482,6 +608,24 @@ TOOLS = [
             "required": ["resource_type"],
         },
     },
+    {
+        "name": "find_orphaned_openrag_pvcs",
+        "description": (
+            "Find orphaned OpenRAG PVCs — PVCs that belong to an OpenRAG workload "
+            "whose parent Workload CR or OpenRAG CR no longer exists. "
+            "Use for storage cleanup after OpenRAG workloads are deleted."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {
+                    "type": "string",
+                    "description": "Namespace to scan. Leave empty to scan ALL namespaces (recommended).",
+                },
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -548,6 +692,11 @@ def handle_request(req: dict) -> dict:
                     args.get("filter_type", ""),
                     args.get("filter_state", ""),
                     args.get("name", ""),
+                )
+            elif tool_name == "find_orphaned_openrag_pvcs":
+                text = _find_orphaned_openrag_pvcs(
+                    core_v1, custom_api,
+                    args.get("namespace", ""),
                 )
             else:
                 return err(-32601, f"Unknown tool: {tool_name}")

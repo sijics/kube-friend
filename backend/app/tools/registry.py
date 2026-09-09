@@ -18,6 +18,7 @@ from app.tools.deployment import get_deployment
 from app.tools.pvc import get_pvc
 from app.tools.unused_pods import find_unused_pods
 from app.tools.crd_resource import get_crd_resources
+from app.tools.orphaned_pvc import find_orphaned_openrag_pvcs
 
 # TOOLS is the complete list of tools the LLM agent can call.
 # LangChain reads each tool's name, description (from docstring),
@@ -31,4 +32,5 @@ TOOLS = [
     get_pvc,
     find_unused_pods,
     get_crd_resources,
+    find_orphaned_openrag_pvcs,
 ]
